@@ -52,8 +52,9 @@ assess_workbench/
   html_report.py   presentation: отчёт -> HTML
   cli.py           единственный модуль с файловым вводом-выводом
 tests/test_candidate_*.py   8 модулей собственных тестов (unittest), 141 тест
+candidate_fixtures/         sales_leads.csv — собственный синтетический пример: 12 рядов, все четыре статуса
 docs/CP1_DESIGN.md          дизайн и решения по неоднозначностям (CP1)
-logs/                       фактические журналы запусков; logs/sample_report.{json,html}
+logs/                       фактические журналы запусков; отчёты sample_report.* и candidate_example_report.*
 evidence/                   вывод RUN_ACCEPTANCE.py
 ```
 
@@ -83,11 +84,14 @@ evidence/                   вывод RUN_ACCEPTANCE.py
 | CSV: `--input fixtures/leads.csv --format csv … --out-dir sample_output_csv` | exit 0, `REPORT_CREATED` | `logs/07_cli_csv.txt` |
 | `cmp` отчётов JSON- и CSV-запусков | `report.json` и `report.html` побайтно идентичны | `logs/08_cli_json_csv_identical.txt` |
 | Ошибочные запуски CLI | `INVALID_SCOPE`, `INVALID_DOCUMENT` (вход с маркером в данных — маркер не выведен), `IO_ERROR`, `INVALID_FORMAT`, `INPUT_TOO_LARGE` для `/dev/zero`. Во всех случаях exit 2, каталог не создан | `logs/09_cli_error_cases.txt` |
+| Собственный пример: `--input candidate_fixtures/sales_leads.csv --format csv … --out-dir sample_output_example` | exit 0, `REPORT_CREATED`; 12 рядов: 5 UNIQUE, 1 DUPLICATE, 3 CONFLICT, 3 REJECTED | `logs/16_cli_candidate_example.txt`, `logs/candidate_example_report.{json,html}` |
 | `ruff check` / `ruff format --check` | `All checks passed!` / `19 files already formatted` | `logs/10_*.txt`, `logs/11_*.txt` |
 | `mypy --strict` | `Success: no issues found in 11 source files` | `logs/12_mypy_strict.txt` |
 | Мутационная проверка тестов | `15/15 injected defects detected` | `logs/15_mutation_smoke.txt` |
 
-`sample_output` и `sample_output_csv` создавались только для демонстрации и удалены после запуска. Копии отчётов лежат в `logs/sample_report.json` и `logs/sample_report.html`. HTML дополнительно проверен визуально в Chrome: все шесть рядов, коды, пояснения и пустые значения видны; `<script>…` отображается как текст; ничего не обрезано.
+`sample_output`, `sample_output_csv` и `sample_output_example` создавались только для демонстрации и удалены после запуска. Копии отчётов лежат в `logs/sample_report.{json,html}` и `logs/candidate_example_report.{json,html}`. `sample_report.html` дополнительно проверен визуально в Chrome: все шесть рядов, коды, пояснения и пустые значения видны; `<script>…` отображается как текст; ничего не обрезано.
+
+Собственный пример `candidate_fixtures/sales_leads.csv` показывает правила на одном наборе: нормализацию пробелов и регистра, точный дубль с другим регистром названия и другим `source_ref`, одну компанию с разными email, конфликт всей группы из трёх рядов, `+tag` без склейки адресов, отказы с одним и с несколькими кодами (кириллица в email, `http://`, `#` в URL, `KAZ`, `russian`, пустые обязательные поля) и экранирование `<script>` в HTML. Все адреса — на зарезервированном домене `.test`.
 
 ## 6. Как воспроизвести
 
@@ -100,6 +104,12 @@ python -m unittest discover -s tests -p "test_candidate_*.py" -v
 python -m assess_workbench --input fixtures/leads.json --format json --client-id synthetic-client --campaign-id synthetic-campaign --out-dir sample_output
 ```
 
+Собственный пример со всеми статусами:
+
+```text
+python -m assess_workbench --input candidate_fixtures/sales_leads.csv --format csv --client-id synthetic-client --campaign-id synthetic-campaign --out-dir sample_output_example
+```
+
 Для повторного запуска CLI нужен новый `--out-dir`: перезапись запрещена контрактом.
 
 Проверка `RETURN_MANIFEST.json` (из корня возврата):
@@ -108,7 +118,7 @@ python -m assess_workbench --input fixtures/leads.json --format json --client-id
 python -c "import hashlib, json, pathlib; m = json.loads(pathlib.Path('RETURN_MANIFEST.json').read_text(encoding='utf-8')); bad = [f['path'] for f in m['files'] if hashlib.sha256(pathlib.Path(f['path']).read_bytes()).hexdigest() != f['sha256']]; print('OK', len(m['files'])) if not bad else print('MISMATCH', bad)"
 ```
 
-Dev-окружение не входит в возврат: `compose.yaml` (песочница без сети и не от root), скрипты сбора журналов, мутационной проверки и упаковки. Причины: `RETURN_INSTRUCTIONS.md` разрешает только перечисленные пути, а `00_READ_FIRST_RU.md` указывает, что Docker не нужен. Продукт от этих файлов не зависит.
+Dev-окружение не входит в возврат: `compose.yaml` (песочница без сети и не от root), `Makefile` с короткими командами, скрипты сбора журналов, мутационной проверки и упаковки. Причины: `RETURN_INSTRUCTIONS.md` разрешает только перечисленные пути, а `00_READ_FIRST_RU.md` указывает, что Docker и Make не нужны. Продукт от этих файлов не зависит.
 
 ## 7. Ход работы по чекпоинтам
 

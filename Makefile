@@ -5,7 +5,7 @@
 PY := docker compose run --rm -T py python
 TOOLS := docker compose --profile tools run --rm -T tools
 T :=
-INPUT := dev/examples/sales_leads.csv
+INPUT := candidate_fixtures/sales_leads.csv
 FORMAT = $(if $(filter %.csv %.CSV,$(INPUT)),csv,json)
 CLIENT := synthetic-client
 CAMPAIGN := synthetic-campaign
@@ -43,8 +43,8 @@ demo: ## CLI на fixtures/leads.json и leads.csv, отчёты в out/json и 
 	$(PY) -m assess_workbench --input fixtures/leads.csv --format csv $(SCOPE_ARGS) --out-dir out/csv
 	@echo "HTML-отчёт: open out/json/report.html"
 
-run: ## Отчёт по файлу: make run INPUT=путь (по умолчанию dev/examples/sales_leads.csv)
-	@case "$(INPUT)" in ""|/*|../*|*/../*) echo "Укажите файл внутри проекта относительным путём: make run INPUT=dev/examples/sales_leads.csv"; exit 2 ;; esac
+run: ## Отчёт по файлу: make run INPUT=путь (по умолчанию candidate_fixtures/sales_leads.csv)
+	@case "$(INPUT)" in ""|/*|../*|*/../*) echo "Укажите файл внутри проекта относительным путём: make run INPUT=candidate_fixtures/sales_leads.csv"; exit 2 ;; esac
 	@test -f "$(INPUT)" || { echo "Нет такого файла: $(INPUT)"; exit 2; }
 	rm -rf "$(RUN_DIR)"
 	mkdir -p out

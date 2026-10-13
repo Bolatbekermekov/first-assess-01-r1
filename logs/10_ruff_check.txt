@@ -1,5 +1,5 @@
 $ sh -c 'ruff --version && ruff check --line-length 120 --target-version py312 --select E,W,F,I,B,UP,SIM,C4,RUF --ignore RUF001,RUF002,RUF003 assess_workbench tests/test_candidate_*.py'
-# started_utc: 2026-10-13T13:55:33+00:00
+# started_utc: 2026-10-13T18:34:01+00:00
 # cwd: /work
 # python: 3.12.13 (CPython)
 # platform: Linux-6.12.76-linuxkit-aarch64-with-glibc2.41

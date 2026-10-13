@@ -1,5 +1,5 @@
 $ /Users/bolatbek/.local/share/uv/python/cpython-3.12-macos-aarch64-none/bin/python3.12 -B -m unittest discover -s tests -p 'test_candidate_*.py' -v
-# started_utc: 2026-10-13T13:55:34+00:00
+# started_utc: 2026-10-13T18:34:02+00:00
 # cwd: /Users/bolatbek/FIRST_ASSESS_01_R1
 # python: 3.12.13 (CPython)
 # platform: macOS-26.6.2-arm64-arm-64bit
@@ -149,6 +149,6 @@ test_scope_identifiers (test_candidate_report.ScopeAndRowListTests.test_scope_id
 test_scope_must_be_an_exact_dict_with_exactly_three_keys (test_candidate_report.ScopeAndRowListTests.test_scope_must_be_an_exact_dict_with_exactly_three_keys) ... ok
 
 ----------------------------------------------------------------------
-Ran 141 tests in 1.360s
+Ran 141 tests in 1.499s
 
 OK

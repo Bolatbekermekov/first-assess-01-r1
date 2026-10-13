@@ -8,7 +8,7 @@ run() { docker compose run --rm -T py python dev/capture.py "$@" 2>/dev/null; }
 tools() { docker compose --profile tools run --rm -T tools python dev/capture.py "$@" 2>/dev/null; }
 MAC_PY="$HOME/.local/share/uv/python/cpython-3.12-macos-aarch64-none/bin/python3.12"
 
-rm -rf logs sample_output sample_output_csv
+rm -rf logs sample_output sample_output_csv sample_output_example
 mkdir -p logs
 dev/py dev/capture.py logs/00_host.txt -- sh -c 'sw_vers; uname -mrs; docker --version; docker compose version; grep -E "image:|FROM|pip install" compose.yaml'
 run logs/01_container_environment.txt -- sh -c 'python -VV; python -c "import platform, unicodedata; print(platform.platform(), \"unicodedata\", unicodedata.unidata_version)"; echo "uid=$(id -u) gid=$(id -g)"; grep PRETTY_NAME /etc/os-release; python -c "import socket; socket.create_connection((\"1.1.1.1\", 53), timeout=3)" 2>&1 | tail -n 1'
@@ -36,5 +36,9 @@ tools logs/12_mypy_strict.txt -- sh -c 'mypy --version && mypy --strict --python
 dev/py dev/capture.py logs/13_macos_candidate_tests.txt -- "$MAC_PY" -B -m unittest discover -s tests -p "test_candidate_*.py" -v
 dev/py dev/capture.py logs/14_macos_public_tests.txt -- "$MAC_PY" -B -m unittest discover -s tests -p "test_public_acceptance.py" -v
 run logs/15_mutation_smoke.txt -- python dev/mutation_smoke.py
+run logs/16_cli_candidate_example.txt -- python -m assess_workbench --input candidate_fixtures/sales_leads.csv --format csv "${SCOPE_ARGS[@]}" --out-dir sample_output_example
+cp sample_output_example/report.json logs/candidate_example_report.json
+cp sample_output_example/report.html logs/candidate_example_report.html
+rm -rf sample_output_example
 git status --short assess_workbench tests
 echo "evidence regenerated"
