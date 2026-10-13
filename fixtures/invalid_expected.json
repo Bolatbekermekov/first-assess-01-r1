@@ -1,0 +1,58 @@
+{
+  "schema_version": "ASSESS_LEAD_REPORT_V1",
+  "scope": {
+    "schema_version": "ASSESS_SCOPE_V1",
+    "client_id": "synthetic-client",
+    "campaign_id": "synthetic-campaign"
+  },
+  "summary": {
+    "total": 4,
+    "unique": 0,
+    "duplicate": 0,
+    "conflict": 0,
+    "rejected": 4
+  },
+  "rows": [
+    {
+      "row_number": 1,
+      "status": "REJECTED",
+      "codes": [
+        "INVALID_ROW_SCHEMA"
+      ],
+      "normalized": null,
+      "duplicate_of_row": null
+    },
+    {
+      "row_number": 2,
+      "status": "REJECTED",
+      "codes": [
+        "INVALID_ROW_SCHEMA"
+      ],
+      "normalized": null,
+      "duplicate_of_row": null
+    },
+    {
+      "row_number": 3,
+      "status": "REJECTED",
+      "codes": [
+        "INVALID_ROW_SCHEMA"
+      ],
+      "normalized": null,
+      "duplicate_of_row": null
+    },
+    {
+      "row_number": 4,
+      "status": "REJECTED",
+      "codes": [
+        "INVALID_COMPANY_NAME",
+        "INVALID_CONTACT_EMAIL",
+        "INVALID_WEBSITE_URL",
+        "INVALID_COUNTRY_CODE",
+        "INVALID_LANGUAGE",
+        "INVALID_SOURCE_REF"
+      ],
+      "normalized": null,
+      "duplicate_of_row": null
+    }
+  ]
+}

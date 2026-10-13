@@ -1,0 +1,7 @@
+company_name,contact_email,website_url,country_code,language,source_ref
+  Alpha   Labs , Buyer@Example.Test ,https://ALPHA.example.test/path?x=1,dk,EN-us,fixture:alpha-one
+alpha labs,buyer@example.test,https://alpha.example.test/path?x=1,DK,en-US,fixture:alpha-two
+Beta,shared@example.test,,,ru,fixture:beta
+Gamma,shared@example.test,,,ru,fixture:gamma
+Broken,not-email,,XX,,fixture:broken
+"<script>alert(1)</script> & ""Quoted""",safe@example.test,,,,fixture:<unsafe>

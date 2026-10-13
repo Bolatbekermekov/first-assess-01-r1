@@ -1,0 +1,76 @@
+{
+  "task_id": "FIRST-ASSESS-01",
+  "revision": "R1",
+  "immutable_files": [
+    {
+      "path": "00_READ_FIRST_RU.md",
+      "sha256": "78689f9edadacf7bb6c884f3e9345857879db047d1ec334c962b1807f98dfd1a"
+    },
+    {
+      "path": "ACCEPTANCE_CRITERIA.md",
+      "sha256": "6556bd76046a4d971e8b3d925689efb7c55b5cb9873aa1be617faf29018863e2"
+    },
+    {
+      "path": "CHECK_PACKAGE.py",
+      "sha256": "037979a1c5cb4f8e7cc60d3037ecaa01527f2154661a999d5208ae9c982546b9"
+    },
+    {
+      "path": "CONTRACT.md",
+      "sha256": "569e31c351fadee9b083d769587c77320a56f6d97295f6ffd54956ee53ee230d"
+    },
+    {
+      "path": "RETURN_INSTRUCTIONS.md",
+      "sha256": "c77eeabfa4fa65cccbc2a22294b5f3c94bac969383791ec830b8264d5bec59d6"
+    },
+    {
+      "path": "RUN_ACCEPTANCE.py",
+      "sha256": "1ee616aba7f042c48a99889bfb09cfead41221024a3b0768505c8ecf474cffa0"
+    },
+    {
+      "path": "fixtures/README.md",
+      "sha256": "9d1a0eb17af2815d7fbb5dadd7c410fac58602450e547dcbd5a79acaf3b0cb16"
+    },
+    {
+      "path": "fixtures/empty.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "fixtures/empty_expected.json",
+      "sha256": "a07ef925ed7454cb1fa070af488f07edcfaa32024aae11fef74d5f74cf56926e"
+    },
+    {
+      "path": "fixtures/expected_report.json",
+      "sha256": "5f310bca48f872d01d14df694ba489e25a187b4476fb8af0ca5b6c032c462780"
+    },
+    {
+      "path": "fixtures/invalid_expected.json",
+      "sha256": "d2620d03ea1ab39f777d75ae416926bbfe40e4e8d63e0f4836951230eab61284"
+    },
+    {
+      "path": "fixtures/invalid_rows.json",
+      "sha256": "23e5a32868c1a763897cab8d05af86426ea708367e6f9aaa0190fad9d1b6221f"
+    },
+    {
+      "path": "fixtures/leads.csv",
+      "sha256": "b764ec8d7ef0365147dc4987c8748faa7c63ff46e226e7fa8658fdb347b5b4b7"
+    },
+    {
+      "path": "fixtures/leads.json",
+      "sha256": "25f22fae290c06e920332b2dc66986f4a1c2a9913d865858125e1ac46e26e18f"
+    },
+    {
+      "path": "fixtures/scope.json",
+      "sha256": "db5854ea835267ad733fbf79f5cde50ca0f962f80c895be4cfca934bbde2cddf"
+    },
+    {
+      "path": "tests/test_public_acceptance.py",
+      "sha256": "fe846207dbaab95c7f33f77990830677df956660bd3acae984e514a474f7fb17"
+    }
+  ],
+  "required_candidate_paths": [
+    "assess_workbench/__init__.py",
+    "assess_workbench/api.py",
+    "assess_workbench/__main__.py"
+  ],
+  "implementation_status_at_preparation": "NOT_IMPLEMENTED"
+}

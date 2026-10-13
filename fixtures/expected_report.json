@@ -1,0 +1,106 @@
+{
+  "schema_version": "ASSESS_LEAD_REPORT_V1",
+  "scope": {
+    "schema_version": "ASSESS_SCOPE_V1",
+    "client_id": "synthetic-client",
+    "campaign_id": "synthetic-campaign"
+  },
+  "summary": {
+    "total": 6,
+    "unique": 2,
+    "duplicate": 1,
+    "conflict": 2,
+    "rejected": 1
+  },
+  "rows": [
+    {
+      "row_number": 1,
+      "status": "UNIQUE",
+      "codes": [
+        "VALID_RECORD"
+      ],
+      "normalized": {
+        "company_name": "Alpha Labs",
+        "contact_email": "buyer@example.test",
+        "website_url": "https://alpha.example.test/path?x=1",
+        "country_code": "DK",
+        "language": "en-US",
+        "source_ref": "fixture:alpha-one"
+      },
+      "duplicate_of_row": null
+    },
+    {
+      "row_number": 2,
+      "status": "DUPLICATE",
+      "codes": [
+        "EXACT_DUPLICATE"
+      ],
+      "normalized": {
+        "company_name": "alpha labs",
+        "contact_email": "buyer@example.test",
+        "website_url": "https://alpha.example.test/path?x=1",
+        "country_code": "DK",
+        "language": "en-US",
+        "source_ref": "fixture:alpha-two"
+      },
+      "duplicate_of_row": 1
+    },
+    {
+      "row_number": 3,
+      "status": "CONFLICT",
+      "codes": [
+        "EMAIL_METADATA_CONFLICT"
+      ],
+      "normalized": {
+        "company_name": "Beta",
+        "contact_email": "shared@example.test",
+        "website_url": "",
+        "country_code": "",
+        "language": "ru",
+        "source_ref": "fixture:beta"
+      },
+      "duplicate_of_row": null
+    },
+    {
+      "row_number": 4,
+      "status": "CONFLICT",
+      "codes": [
+        "EMAIL_METADATA_CONFLICT"
+      ],
+      "normalized": {
+        "company_name": "Gamma",
+        "contact_email": "shared@example.test",
+        "website_url": "",
+        "country_code": "",
+        "language": "ru",
+        "source_ref": "fixture:gamma"
+      },
+      "duplicate_of_row": null
+    },
+    {
+      "row_number": 5,
+      "status": "REJECTED",
+      "codes": [
+        "INVALID_CONTACT_EMAIL"
+      ],
+      "normalized": null,
+      "duplicate_of_row": null
+    },
+    {
+      "row_number": 6,
+      "status": "UNIQUE",
+      "codes": [
+        "VALID_RECORD"
+      ],
+      "normalized": {
+        "company_name": "<script>alert(1)</script> & \"Quoted\"",
+        "contact_email": "safe@example.test",
+        "website_url": "",
+        "country_code": "",
+        "language": "",
+        "source_ref": "fixture:<unsafe>"
+      },
+      "duplicate_of_row": null
+    }
+  ]
+}

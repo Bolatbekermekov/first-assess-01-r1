@@ -1,0 +1,50 @@
+[
+  {
+    "company_name": "  Alpha   Labs ",
+    "contact_email": " Buyer@Example.Test ",
+    "website_url": "https://ALPHA.example.test/path?x=1",
+    "country_code": "dk",
+    "language": "EN-us",
+    "source_ref": "fixture:alpha-one"
+  },
+  {
+    "company_name": "alpha labs",
+    "contact_email": "buyer@example.test",
+    "website_url": "https://alpha.example.test/path?x=1",
+    "country_code": "DK",
+    "language": "en-US",
+    "source_ref": "fixture:alpha-two"
+  },
+  {
+    "company_name": "Beta",
+    "contact_email": "shared@example.test",
+    "website_url": "",
+    "country_code": "",
+    "language": "ru",
+    "source_ref": "fixture:beta"
+  },
+  {
+    "company_name": "Gamma",
+    "contact_email": "shared@example.test",
+    "website_url": "",
+    "country_code": "",
+    "language": "ru",
+    "source_ref": "fixture:gamma"
+  },
+  {
+    "company_name": "Broken",
+    "contact_email": "not-email",
+    "website_url": "",
+    "country_code": "XX",
+    "language": "",
+    "source_ref": "fixture:broken"
+  },
+  {
+    "company_name": "<script>alert(1)</script> & \"Quoted\"",
+    "contact_email": "safe@example.test",
+    "website_url": "",
+    "country_code": "",
+    "language": "",
+    "source_ref": "fixture:<unsafe>"
+  }
+]

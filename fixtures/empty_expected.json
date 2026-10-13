@@ -1,0 +1,16 @@
+{
+  "schema_version": "ASSESS_LEAD_REPORT_V1",
+  "scope": {
+    "schema_version": "ASSESS_SCOPE_V1",
+    "client_id": "synthetic-client",
+    "campaign_id": "synthetic-campaign"
+  },
+  "summary": {
+    "total": 0,
+    "unique": 0,
+    "duplicate": 0,
+    "conflict": 0,
+    "rejected": 0
+  },
+  "rows": []
+}

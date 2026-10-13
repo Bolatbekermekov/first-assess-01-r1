@@ -1,0 +1,21 @@
+[
+  null,
+  {},
+  {
+    "company_name": "  Alpha   Labs ",
+    "contact_email": " Buyer@Example.Test ",
+    "website_url": "https://ALPHA.example.test/path?x=1",
+    "country_code": "dk",
+    "language": "EN-us",
+    "source_ref": "fixture:alpha-one",
+    "unexpected": true
+  },
+  {
+    "company_name": "",
+    "contact_email": "bad",
+    "website_url": "http://x.test",
+    "country_code": true,
+    "language": "english",
+    "source_ref": ""
+  }
+]
