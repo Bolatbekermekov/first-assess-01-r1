@@ -1,0 +1,30 @@
+$ sh -c '
+  printf SECRET_SENTINEL_RAW_PAYLOAD > /tmp/bad.json
+  for case in "fixtures/leads.json json bad%id" "/tmp/bad.json json synthetic-client" "/tmp/missing.json json synthetic-client" "fixtures/leads.json xml synthetic-client" "/dev/zero json synthetic-client"; do
+    set -- $case
+    echo "--- --input $1 --format $2 --client-id $3"
+    python -m assess_workbench --input "$1" --format "$2" --client-id "$3" --campaign-id synthetic-campaign --out-dir /tmp/out
+    echo "exit=$? out_dir_created=$(test -e /tmp/out && echo yes || echo no)"
+  done 2>&1'
+# started_utc: 2026-10-13T13:55:32+00:00
+# cwd: /work
+# python: 3.12.13 (CPython)
+# platform: Linux-6.12.76-linuxkit-aarch64-with-glibc2.41
+# exit_code: 0
+## stdout
+--- --input fixtures/leads.json --format json --client-id bad%id
+ERROR INVALID_SCOPE
+exit=2 out_dir_created=no
+--- --input /tmp/bad.json --format json --client-id synthetic-client
+ERROR INVALID_DOCUMENT
+exit=2 out_dir_created=no
+--- --input /tmp/missing.json --format json --client-id synthetic-client
+ERROR IO_ERROR
+exit=2 out_dir_created=no
+--- --input fixtures/leads.json --format xml --client-id synthetic-client
+ERROR INVALID_FORMAT
+exit=2 out_dir_created=no
+--- --input /dev/zero --format json --client-id synthetic-client
+ERROR INPUT_TOO_LARGE
+exit=2 out_dir_created=no
+## stderr

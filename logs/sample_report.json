@@ -1,0 +1,106 @@
+{
+  "rows": [
+    {
+      "codes": [
+        "VALID_RECORD"
+      ],
+      "duplicate_of_row": null,
+      "normalized": {
+        "company_name": "Alpha Labs",
+        "contact_email": "buyer@example.test",
+        "country_code": "DK",
+        "language": "en-US",
+        "source_ref": "fixture:alpha-one",
+        "website_url": "https://alpha.example.test/path?x=1"
+      },
+      "row_number": 1,
+      "status": "UNIQUE"
+    },
+    {
+      "codes": [
+        "EXACT_DUPLICATE"
+      ],
+      "duplicate_of_row": 1,
+      "normalized": {
+        "company_name": "alpha labs",
+        "contact_email": "buyer@example.test",
+        "country_code": "DK",
+        "language": "en-US",
+        "source_ref": "fixture:alpha-two",
+        "website_url": "https://alpha.example.test/path?x=1"
+      },
+      "row_number": 2,
+      "status": "DUPLICATE"
+    },
+    {
+      "codes": [
+        "EMAIL_METADATA_CONFLICT"
+      ],
+      "duplicate_of_row": null,
+      "normalized": {
+        "company_name": "Beta",
+        "contact_email": "shared@example.test",
+        "country_code": "",
+        "language": "ru",
+        "source_ref": "fixture:beta",
+        "website_url": ""
+      },
+      "row_number": 3,
+      "status": "CONFLICT"
+    },
+    {
+      "codes": [
+        "EMAIL_METADATA_CONFLICT"
+      ],
+      "duplicate_of_row": null,
+      "normalized": {
+        "company_name": "Gamma",
+        "contact_email": "shared@example.test",
+        "country_code": "",
+        "language": "ru",
+        "source_ref": "fixture:gamma",
+        "website_url": ""
+      },
+      "row_number": 4,
+      "status": "CONFLICT"
+    },
+    {
+      "codes": [
+        "INVALID_CONTACT_EMAIL"
+      ],
+      "duplicate_of_row": null,
+      "normalized": null,
+      "row_number": 5,
+      "status": "REJECTED"
+    },
+    {
+      "codes": [
+        "VALID_RECORD"
+      ],
+      "duplicate_of_row": null,
+      "normalized": {
+        "company_name": "<script>alert(1)</script> & \"Quoted\"",
+        "contact_email": "safe@example.test",
+        "country_code": "",
+        "language": "",
+        "source_ref": "fixture:<unsafe>",
+        "website_url": ""
+      },
+      "row_number": 6,
+      "status": "UNIQUE"
+    }
+  ],
+  "schema_version": "ASSESS_LEAD_REPORT_V1",
+  "scope": {
+    "campaign_id": "synthetic-campaign",
+    "client_id": "synthetic-client",
+    "schema_version": "ASSESS_SCOPE_V1"
+  },
+  "summary": {
+    "conflict": 2,
+    "duplicate": 1,
+    "rejected": 1,
+    "total": 6,
+    "unique": 2
+  }
+}

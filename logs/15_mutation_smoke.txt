@@ -1,0 +1,24 @@
+$ python dev/mutation_smoke.py
+# started_utc: 2026-10-13T13:55:36+00:00
+# cwd: /work
+# python: 3.12.13 (CPython)
+# platform: Linux-6.12.76-linuxkit-aarch64-with-glibc2.41
+# exit_code: 0
+## stdout
+KILLED    grouping.py     duplicate points to the previous row instead of the first  (tests: grouping, properties)
+KILLED    grouping.py     a late metadata difference is ignored  (tests: grouping, properties)
+KILLED    grouping.py     source_ref becomes part of the metadata key  (tests: grouping, properties)
+KILLED    fields.py       raw length limit measured after strip  (tests: fields)
+KILLED    fields.py       empty fragment no longer rejected  (tests: fields)
+KILLED    fields.py       email local part limit dropped  (tests: fields)
+KILLED    fields.py       company name compared without NFC  (tests: fields, grouping)
+KILLED    analysis.py     codes returned as a shared tuple  (tests: report)
+KILLED    loading.py      csv.field_size_limit not restored  (tests: loading)
+KILLED    loading.py      decode error chained to WorkbenchError  (tests: loading)
+KILLED    loading.py      blank CSV records skipped  (tests: loading)
+KILLED    loading.py      field size limit raised at import time  (tests: isolation)
+KILLED    html_report.py  quotes left unescaped in HTML  (tests: html)
+KILLED    cli.py          output directory created with makedirs(exist_ok=True)  (tests: cli)
+KILLED    cli.py          whole input read without the size cap  (tests: cli)
+15/15 injected defects detected
+## stderr

@@ -1,0 +1,18 @@
+$ sh -c 'sw_vers; uname -mrs; docker --version; docker compose version; grep -E "image:|FROM|pip install" compose.yaml'
+# started_utc: 2026-10-13T13:55:23+00:00
+# cwd: /Users/bolatbek/FIRST_ASSESS_01_R1
+# python: 3.12.13 (CPython)
+# platform: macOS-26.6.2-arm64-arm-64bit
+# exit_code: 0
+## stdout
+ProductName:		macOS
+ProductVersion:		26.6.2
+BuildVersion:		25G83
+Darwin 25.6.0 arm64
+Docker version 29.6.1, build 8900f1d
+Docker Compose version v5.3.0
+    image: python:3.12.13-slim-trixie@sha256:229a2c5bfa27522db7815ea81f9bed70af17ccb9de9fc7ad142b1877b5830d36
+    image: first-assess-01-tools:local
+        FROM python:3.12.13-slim-trixie@sha256:229a2c5bfa27522db7815ea81f9bed70af17ccb9de9fc7ad142b1877b5830d36
+        RUN pip install --no-cache-dir ruff==0.17.0 mypy==2.4.0
+## stderr

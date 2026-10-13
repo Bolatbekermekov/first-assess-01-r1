@@ -1,0 +1,13 @@
+$ sh -c 'python -VV; python -c "import platform, unicodedata; print(platform.platform(), \"unicodedata\", unicodedata.unidata_version)"; echo "uid=$(id -u) gid=$(id -g)"; grep PRETTY_NAME /etc/os-release; python -c "import socket; socket.create_connection((\"1.1.1.1\", 53), timeout=3)" 2>&1 | tail -n 1'
+# started_utc: 2026-10-13T13:55:24+00:00
+# cwd: /work
+# python: 3.12.13 (CPython)
+# platform: Linux-6.12.76-linuxkit-aarch64-with-glibc2.41
+# exit_code: 0
+## stdout
+Python 3.12.13 (main, Aug  5 2026, 01:16:26) [GCC 14.2.0]
+Linux-6.12.76-linuxkit-aarch64-with-glibc2.41 unicodedata 15.0.0
+uid=1000 gid=1000
+PRETTY_NAME="Debian GNU/Linux 13 (trixie)"
+OSError: [Errno 101] Network is unreachable
+## stderr

@@ -1,0 +1,18 @@
+$ sh -c 'cmp sample_output/report.json sample_output_csv/report.json && cmp sample_output/report.html sample_output_csv/report.html && echo "report.json and report.html are byte-identical for the JSON and CSV inputs"; ls -l sample_output sample_output_csv'
+# started_utc: 2026-10-13T13:55:32+00:00
+# cwd: /work
+# python: 3.12.13 (CPython)
+# platform: Linux-6.12.76-linuxkit-aarch64-with-glibc2.41
+# exit_code: 0
+## stdout
+report.json and report.html are byte-identical for the JSON and CSV inputs
+sample_output:
+total 16
+-rw-r--r-- 1 1000 1000 9091 Oct 13 13:55 report.html
+-rw-r--r-- 1 1000 1000 2509 Oct 13 13:55 report.json
+
+sample_output_csv:
+total 16
+-rw-r--r-- 1 1000 1000 9091 Oct 13 13:55 report.html
+-rw-r--r-- 1 1000 1000 2509 Oct 13 13:55 report.json
+## stderr

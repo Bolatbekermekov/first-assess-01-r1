@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Отчёт проверки лидов — synthetic-client / synthetic-campaign</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --fg: #1f2328; --muted: #59636e; --bg: #ffffff; --line: #d1d9e0; --head: #f6f8fa;
+  --unique: #1a7f37; --duplicate: #9a6700; --conflict: #bc4c00; --rejected: #cf222e; --unknown: #59636e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fg: #e6edf3; --muted: #9198a1; --bg: #0d1117; --line: #3d444d; --head: #151b23;
+    --unique: #3fb950; --duplicate: #d29922; --conflict: #db6d28; --rejected: #f85149; --unknown: #9198a1;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; color: var(--fg); background: var(--bg);
+       font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 1680px; margin: 0 auto; padding: 24px 16px 48px; }
+h1 { font-size: 22px; margin: 0 0 4px; }
+h2 { font-size: 17px; margin: 28px 0 10px; }
+code { font: 12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.muted { color: var(--muted); }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
+thead th { background: var(--head); }
+table.summary { width: auto; }
+table.summary td { font-size: 18px; }
+dl.scope { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 0; }
+dl.scope dd { margin: 0; overflow-wrap: anywhere; }
+.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.value { white-space: pre-wrap; overflow-wrap: anywhere; }
+.empty::before { content: "пусто"; color: var(--muted); font-style: italic; }
+.no-data { color: var(--muted); font-style: italic; }
+ul.codes { margin: 0; padding: 0; list-style: none; }
+ul.codes li + li { margin-top: 4px; }
+.explain { color: var(--muted); }
+.status { font-weight: 600; }
+.status-unique .status { color: var(--unique); }
+.status-duplicate .status { color: var(--duplicate); }
+.status-conflict .status { color: var(--conflict); }
+.status-rejected .status { color: var(--rejected); }
+.status-unknown .status { color: var(--unknown); }
+tr.status-unique > td:first-child { box-shadow: inset 4px 0 var(--unique); }
+tr.status-duplicate > td:first-child { box-shadow: inset 4px 0 var(--duplicate); }
+tr.status-conflict > td:first-child { box-shadow: inset 4px 0 var(--conflict); }
+tr.status-rejected > td:first-child { box-shadow: inset 4px 0 var(--rejected); }
+.empty-set { padding: 12px 16px; border: 1px dashed var(--line); }
+dl.legend dt { margin-top: 8px; }
+dl.legend dd { margin: 2px 0 0; }
+@media print {
+  main { max-width: none; padding: 0; }
+  body { font-size: 11px; }
+}
+</style>
+</head>
+<body>
+<main>
+<header>
+<h1>Отчёт проверки лидов</h1>
+<p class="muted">Схема отчёта <code>ASSESS_LEAD_REPORT_V1</code>. Синтаксическая валидность не означает, что компания существует, адрес принимает письма или есть разрешение на контакт.</p>
+</header>
+<section>
+<h2>Scope</h2>
+<dl class="scope">
+<dt><code>schema_version</code></dt><dd><code>ASSESS_SCOPE_V1</code></dd>
+<dt><code>client_id</code></dt><dd><code>synthetic-client</code></dd>
+<dt><code>campaign_id</code></dt><dd><code>synthetic-campaign</code></dd>
+</dl>
+</section>
+<section>
+<h2>Сводка</h2>
+<table class="summary">
+<thead><tr><th scope="col">Всего рядов</th><th scope="col">UNIQUE</th><th scope="col">DUPLICATE</th><th scope="col">CONFLICT</th><th scope="col">REJECTED</th></tr></thead>
+<tbody><tr><td class="num">6</td><td class="num">2</td><td class="num">1</td><td class="num">2</td><td class="num">1</td></tr></tbody>
+</table>
+</section>
+<section>
+<h2>Ряды</h2>
+<table class="rows">
+<thead><tr><th scope="col">№</th><th scope="col">Статус</th><th scope="col">Коды причин</th><th scope="col"><code>company_name</code></th><th scope="col"><code>contact_email</code></th><th scope="col"><code>website_url</code></th><th scope="col"><code>country_code</code></th><th scope="col"><code>language</code></th><th scope="col"><code>source_ref</code></th><th scope="col"><code>duplicate_of_row</code></th></tr></thead>
+<tbody>
+<tr class="status-unique"><td class="num">1</td><td><span class="status">UNIQUE</span></td><td class="codes"><ul class="codes"><li><code>VALID_RECORD</code> <span class="explain">— все поля прошли проверку</span></li></ul></td><td class="value">Alpha Labs</td><td class="value">buyer@example.test</td><td class="value">https://alpha.example.test/path?x=1</td><td class="value">DK</td><td class="value">en-US</td><td class="value">fixture:alpha-one</td><td class="num muted">—</td></tr>
+<tr class="status-duplicate"><td class="num">2</td><td><span class="status">DUPLICATE</span></td><td class="codes"><ul class="codes"><li><code>EXACT_DUPLICATE</code> <span class="explain">— точный дубль более раннего ряда</span></li></ul></td><td class="value">alpha labs</td><td class="value">buyer@example.test</td><td class="value">https://alpha.example.test/path?x=1</td><td class="value">DK</td><td class="value">en-US</td><td class="value">fixture:alpha-two</td><td class="num">1</td></tr>
+<tr class="status-conflict"><td class="num">3</td><td><span class="status">CONFLICT</span></td><td class="codes"><ul class="codes"><li><code>EMAIL_METADATA_CONFLICT</code> <span class="explain">— метаданные расходятся с другими рядами этого email</span></li></ul></td><td class="value">Beta</td><td class="value">shared@example.test</td><td class="value empty"></td><td class="value empty"></td><td class="value">ru</td><td class="value">fixture:beta</td><td class="num muted">—</td></tr>
+<tr class="status-conflict"><td class="num">4</td><td><span class="status">CONFLICT</span></td><td class="codes"><ul class="codes"><li><code>EMAIL_METADATA_CONFLICT</code> <span class="explain">— метаданные расходятся с другими рядами этого email</span></li></ul></td><td class="value">Gamma</td><td class="value">shared@example.test</td><td class="value empty"></td><td class="value empty"></td><td class="value">ru</td><td class="value">fixture:gamma</td><td class="num muted">—</td></tr>
+<tr class="status-rejected"><td class="num">5</td><td><span class="status">REJECTED</span></td><td class="codes"><ul class="codes"><li><code>INVALID_CONTACT_EMAIL</code> <span class="explain">— email не проходит синтаксическую ASCII-проверку контракта</span></li></ul></td><td class="no-data" colspan="6">Нормализованные значения отсутствуют: ряд отклонён. Исходные данные не показываются.</td><td class="num muted">—</td></tr>
+<tr class="status-unique"><td class="num">6</td><td><span class="status">UNIQUE</span></td><td class="codes"><ul class="codes"><li><code>VALID_RECORD</code> <span class="explain">— все поля прошли проверку</span></li></ul></td><td class="value">&lt;script&gt;alert(1)&lt;/script&gt; &amp; &quot;Quoted&quot;</td><td class="value">safe@example.test</td><td class="value empty"></td><td class="value empty"></td><td class="value empty"></td><td class="value">fixture:&lt;unsafe&gt;</td><td class="num muted">—</td></tr>
+</tbody>
+</table>
+</section>
+<section>
+<h2>Что означают статусы</h2>
+<dl class="legend">
+<dt class="status-unique"><span class="status">UNIQUE</span></dt><dd>в текущем наборе нет другого валидного ряда с этим email. Это не подтверждает существование компании, доставляемость адреса или разрешение на контакт.</dd>
+<dt class="status-duplicate"><span class="status">DUPLICATE</span></dt><dd>тот же email и те же метаданные (название без учёта регистра, сайт, страна, язык), что у более раннего ряда из колонки duplicate_of_row. Поля рядов не сливаются.</dd>
+<dt class="status-conflict"><span class="status">CONFLICT</span></dt><dd>у рядов с этим email различаются метаданные. Автоматического выбора или обогащения нет: все ряды группы требуют ручного разбора.</dd>
+<dt class="status-rejected"><span class="status">REJECTED</span></dt><dd>ряд не прошёл проверку и исключён из поиска дублей. Исходные значения в отчёт не попадают, только коды причин.</dd>
+</dl>
+</section>
+</main>
+</body>
+</html>
