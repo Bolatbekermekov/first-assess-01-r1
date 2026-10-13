@@ -1,9 +1,6 @@
-"""CLI must be implemented by the candidate."""
-import sys
+"""Entry point for ``python -m assess_workbench`` (CONTRACT.md, section 7)."""
 
-def main():
-    sys.stderr.write("ERROR NOT_IMPLEMENTED\n")
-    return 3
+from .cli import main
 
 if __name__ == "__main__":
     raise SystemExit(main())
