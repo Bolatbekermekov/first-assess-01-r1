@@ -15,13 +15,43 @@ SCOPE = json.loads((ROOT / "fixtures" / "scope.json").read_text(encoding="utf-8"
 SEED = 20261013
 FIELDS = ("company_name", "contact_email", "website_url", "country_code", "language", "source_ref")
 POOLS = {
-    "company_name": ["Alpha Labs", "alpha labs", " ALPHA  LABS ", "Straße", "STRASSE", "Café", "Café",
-                     "", "x" * 201, "Tab\tCo", "Line\nBreak", "Ünïcødé", 7, None],
-    "contact_email": ["a@example.test", " A@Example.test ", "b@example.test", "b+tag@example.test", "c@example.test",
-                      "not-an-email", "a@example", "Kate@example.test", ""],
-    "website_url": ["", "https://example.test", "https://example.test/", "https://EXAMPLE.test/",
-                    "http://example.test", "https://example.test/#", "   "],
-    "country_code": ["", "DK", "dk", "SE", "XXX", "ß"],
+    "company_name": [
+        "Alpha Labs",
+        "alpha labs",
+        " ALPHA  LABS ",
+        "Stra\u00dfe",
+        "STRASSE",
+        "Caf\u00e9",
+        "Cafe\u0301",
+        "",
+        "x" * 201,
+        "Tab\tCo",
+        "Line\nBreak",
+        "\u00dcn\u00efc\u00f8d\u00e9",
+        7,
+        None,
+    ],
+    "contact_email": [
+        "a@example.test",
+        " A@Example.test ",
+        "b@example.test",
+        "b+tag@example.test",
+        "c@example.test",
+        "not-an-email",
+        "a@example",
+        "\u212aate@example.test",
+        "",
+    ],
+    "website_url": [
+        "",
+        "https://example.test",
+        "https://example.test/",
+        "https://EXAMPLE.test/",
+        "http://example.test",
+        "https://example.test/#",
+        "   ",
+    ],
+    "country_code": ["", "DK", "dk", "SE", "XXX", "\u00df"],
     "language": ["", "en", "EN", "en-US", "en-us", "english"],
     "source_ref": ["ref:1", "ref:2", " ref:3 ", "", "r" * 201],
 }
@@ -49,8 +79,12 @@ def expected_outcomes(report):
     expected = {}
     for members in groups.values():
         keys = {
-            (m["normalized"]["company_name"].casefold(), m["normalized"]["website_url"],
-             m["normalized"]["country_code"], m["normalized"]["language"])
+            (
+                m["normalized"]["company_name"].casefold(),
+                m["normalized"]["website_url"],
+                m["normalized"]["country_code"],
+                m["normalized"]["language"],
+            )
             for m in members
         }
         if len(keys) > 1:
@@ -98,8 +132,11 @@ class RandomizedInvariantTests(unittest.TestCase):
     def test_json_and_csv_inputs_are_equivalent(self):
         rng = random.Random(SEED + 2)
         for _ in range(60):
-            rows = [row for row in (random_row(rng) for _ in range(rng.randint(0, 25)))
-                    if type(row) is dict and set(row) == set(FIELDS) and all(type(v) is str for v in row.values())]
+            rows = [
+                row
+                for row in (random_row(rng) for _ in range(rng.randint(0, 25)))
+                if type(row) is dict and set(row) == set(FIELDS) and all(type(v) is str for v in row.values())
+            ]
             header = list(FIELDS)
             rng.shuffle(header)
             buffer = io.StringIO()
@@ -130,9 +167,14 @@ class RandomizedInvariantTests(unittest.TestCase):
 
     def test_maximum_row_count_is_processed_quickly(self):
         rows = [
-            {"company_name": f"Company {index % 1500}", "contact_email": f"user{index % 2000}@example.test",
-             "website_url": "https://example.test/", "country_code": "DK", "language": "en",
-             "source_ref": f"ref:{index}"}
+            {
+                "company_name": f"Company {index % 1500}",
+                "contact_email": f"user{index % 2000}@example.test",
+                "website_url": "https://example.test/",
+                "country_code": "DK",
+                "language": "en",
+                "source_ref": f"ref:{index}",
+            }
             for index in range(10_000)
         ]
         started = time.perf_counter()

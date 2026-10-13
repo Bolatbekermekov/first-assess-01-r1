@@ -120,8 +120,15 @@ class EncodingTests(LoaderTestCase):
             self.assert_error("INVALID_DOCUMENT", BOM, data_format)
 
     def test_invalid_utf8(self):
-        samples = [b"\xff", b"\xc0\x80", b'["\xed\xa0\x80"]', b'["\xe2\x82"]', b"\xff\xfe[\x00]\x00",
-                   b'["caf\xe9"]', b"\xf8\x88\x80\x80\x80"]
+        samples = [
+            b"\xff",
+            b"\xc0\x80",
+            b'["\xed\xa0\x80"]',
+            b'["\xe2\x82"]',
+            b"\xff\xfe[\x00]\x00",
+            b'["caf\xe9"]',
+            b"\xf8\x88\x80\x80\x80",
+        ]
         for data_format in ("json", "csv"):
             for data in samples:
                 self.assert_error("INVALID_ENCODING", data, data_format)
@@ -139,9 +146,31 @@ class JsonDocumentTests(LoaderTestCase):
             self.assertEqual(load_rows(data, format="json"), [])
 
     def test_invalid_documents(self):
-        samples = [b"", b"   ", b"{}", b'{"rows": []}', b'"x"', b"1", b"null", b"true", b"[] []", b"[],", b"[]x",
-                   b"[]\x0c", b"[]\x00", b"\x0c[]", b"[1,]", b"[01]", b"['x']", b"[undefined]", b"[nan]",
-                   b'["a\x01"]', b'["a\nb"]', b"/* c */ []", b"[] // c"]
+        samples = [
+            b"",
+            b"   ",
+            b"{}",
+            b'{"rows": []}',
+            b'"x"',
+            b"1",
+            b"null",
+            b"true",
+            b"[] []",
+            b"[],",
+            b"[]x",
+            b"[]\x0c",
+            b"[]\x00",
+            b"\x0c[]",
+            b"[1,]",
+            b"[01]",
+            b"['x']",
+            b"[undefined]",
+            b"[nan]",
+            b'["a\x01"]',
+            b'["a\nb"]',
+            b"/* c */ []",
+            b"[] // c",
+        ]
         for data in samples:
             self.assert_error("INVALID_DOCUMENT", data, "json")
 
@@ -150,15 +179,22 @@ class JsonDocumentTests(LoaderTestCase):
             self.assert_error("INVALID_DOCUMENT", data, "json")
 
     def test_duplicate_keys_are_rejected_at_any_depth(self):
-        samples = [b'[{"a": 1, "a": 2}]', b'[{"a": 1, "a": 1}]', b'[{"x": {"b": {"c": 1, "c": 2}}}]',
-                   b'[{"x": [{"k": 1, "k": 1}]}]', b'[[[{"k": 1, "k": 2}]]]', b'[{"a": 1, "\\u0061": 2}]',
-                   b'[{"company_name": "A", "company_name": "B"}]']
+        samples = [
+            b'[{"a": 1, "a": 2}]',
+            b'[{"a": 1, "a": 1}]',
+            b'[{"x": {"b": {"c": 1, "c": 2}}}]',
+            b'[{"x": [{"k": 1, "k": 1}]}]',
+            b'[[[{"k": 1, "k": 2}]]]',
+            b'[{"a": 1, "\\u0061": 2}]',
+            b'[{"company_name": "A", "company_name": "B"}]',
+        ]
         for data in samples:
             self.assert_error("INVALID_DOCUMENT", data, "json")
 
     def test_keys_that_differ_only_in_unicode_normalization_are_distinct(self):
-        self.assertEqual(load_rows('[{"é": 1, "é": 2}]'.encode(), format="json"),
-                         [{"é": 1, "é": 2}])
+        self.assertEqual(
+            load_rows('[{"\u00e9": 1, "e\u0301": 2}]'.encode(), format="json"), [{"\u00e9": 1, "e\u0301": 2}]
+        )
 
     def test_deep_nesting_is_a_document_error(self):
         # CP1 A7: the exact depth limit belongs to the interpreter; only RecursionError is translated.

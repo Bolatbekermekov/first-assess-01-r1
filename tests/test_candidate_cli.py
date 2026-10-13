@@ -29,8 +29,18 @@ def run_cli(*args, timeout=120):
 
 
 def arguments(input_path, out_dir, data_format="json", client="synthetic-client", campaign="synthetic-campaign"):
-    return ["--input", input_path, "--format", data_format, "--client-id", client, "--campaign-id", campaign,
-            "--out-dir", out_dir]
+    return [
+        "--input",
+        input_path,
+        "--format",
+        data_format,
+        "--client-id",
+        client,
+        "--campaign-id",
+        campaign,
+        "--out-dir",
+        out_dir,
+    ]
 
 
 def snapshot(path):
@@ -276,9 +286,11 @@ class InProcessTests(CliTestCase):
         self.assertEqual(list(victim.iterdir()), [])
 
     def test_keyboard_interrupt_is_not_swallowed(self):
-        with mock.patch("assess_workbench.cli.load_rows", side_effect=KeyboardInterrupt):
-            with self.assertRaises(KeyboardInterrupt):
-                self.run_main(arguments(FIX / "leads.json", self.tmp / "out"))
+        with (
+            mock.patch("assess_workbench.cli.load_rows", side_effect=KeyboardInterrupt),
+            self.assertRaises(KeyboardInterrupt),
+        ):
+            self.run_main(arguments(FIX / "leads.json", self.tmp / "out"))
         self.assertFalse((self.tmp / "out").exists())
 
 

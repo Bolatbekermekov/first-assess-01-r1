@@ -22,8 +22,33 @@ ROW = {
     "source_ref": "candidate:baseline",
 }
 HOSTILE = "<img src=x onerror=alert(1)> & \"double\" 'single' </td></tr>"
-ALLOWED_TAGS = {"html", "head", "meta", "title", "style", "body", "main", "header", "section", "h1", "h2", "p", "dl",
-                "dt", "dd", "table", "thead", "tbody", "tr", "th", "td", "code", "span", "ul", "li"}
+ALLOWED_TAGS = {
+    "html",
+    "head",
+    "meta",
+    "title",
+    "style",
+    "body",
+    "main",
+    "header",
+    "section",
+    "h1",
+    "h2",
+    "p",
+    "dl",
+    "dt",
+    "dd",
+    "table",
+    "thead",
+    "tbody",
+    "tr",
+    "th",
+    "td",
+    "code",
+    "span",
+    "ul",
+    "li",
+}
 ALLOWED_ATTRIBUTES = {
     ("html", "lang"): {"ru"},
     ("meta", "charset"): {"utf-8"},
@@ -33,9 +58,26 @@ ALLOWED_ATTRIBUTES = {
     ("th", "scope"): {"col"},
     ("td", "colspan"): {"6"},
 }
-ALLOWED_CLASSES = {"muted", "scope", "summary", "rows", "num", "value", "empty", "no-data", "codes", "explain",
-                   "status", "status-unique", "status-duplicate", "status-conflict", "status-rejected",
-                   "status-unknown", "empty-set", "legend"}
+ALLOWED_CLASSES = {
+    "muted",
+    "scope",
+    "summary",
+    "rows",
+    "num",
+    "value",
+    "empty",
+    "no-data",
+    "codes",
+    "explain",
+    "status",
+    "status-unique",
+    "status-duplicate",
+    "status-conflict",
+    "status-rejected",
+    "status-unknown",
+    "empty-set",
+    "legend",
+}
 
 
 class DocumentModel(HTMLParser):
@@ -87,8 +129,13 @@ def mixed_report():
         dict(ROW, contact_email="conflict@example.test", company_name="Different"),
         None,
         dict(ROW, contact_email="bad", website_url="ftp://x"),
-        dict(ROW, contact_email="hostile@example.test", company_name=HOSTILE, source_ref=HOSTILE,
-             website_url="https://example.test/?q=\"><script>alert(1)</script>"),
+        dict(
+            ROW,
+            contact_email="hostile@example.test",
+            company_name=HOSTILE,
+            source_ref=HOSTILE,
+            website_url='https://example.test/?q="><script>alert(1)</script>',
+        ),
     ]
     return analyze_rows(rows, scope=SCOPE)
 
@@ -115,8 +162,23 @@ class HtmlTests(unittest.TestCase):
 
     def test_template_contains_no_active_content_or_resource_references(self):
         document = render_html(analyze_rows([ROW], scope=SCOPE)).lower()
-        for marker in ("<script", "<iframe", "<form", "<link", "<img", "<a ", "<object", "<embed", "href", "src=",
-                       "url(", "@import", "javascript:", "http:", "https:"):
+        for marker in (
+            "<script",
+            "<iframe",
+            "<form",
+            "<link",
+            "<img",
+            "<a ",
+            "<object",
+            "<embed",
+            "href",
+            "src=",
+            "url(",
+            "@import",
+            "javascript:",
+            "http:",
+            "https:",
+        ):
             self.assertNotIn(marker, document)
 
     def test_every_row_and_value_is_shown_in_full(self):
@@ -144,8 +206,10 @@ class HtmlTests(unittest.TestCase):
         for value in report["scope"].values():
             self.assertIn(value, text)
         summary_row = next(cells for cells in DocumentModel(render_html(report)).rows if cells[:1] == ["8"])
-        self.assertEqual(summary_row, [str(report["summary"][key]) for key in
-                                       ("total", "unique", "duplicate", "conflict", "rejected")])
+        self.assertEqual(
+            summary_row,
+            [str(report["summary"][key]) for key in ("total", "unique", "duplicate", "conflict", "rejected")],
+        )
 
     def test_rejected_rows_show_reasons_but_never_raw_input(self):
         secret = "SECRET-SENTINEL-77"
@@ -165,7 +229,7 @@ class HtmlTests(unittest.TestCase):
         self.assertNotIn("<img", document)
         self.assertNotIn("<script", document.lower())
         self.assertIn(html.escape(HOSTILE, quote=True), document)
-        self.assertIn(html.escape("https://example.test/?q=\"><script>alert(1)</script>", quote=True), document)
+        self.assertIn(html.escape('https://example.test/?q="><script>alert(1)</script>', quote=True), document)
 
     def test_values_from_a_crafted_report_are_escaped(self):
         crafted = copy.deepcopy(EXPECTED)  # CP1 A15: no re-validation, still escaped

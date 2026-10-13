@@ -44,8 +44,9 @@ class IsolationTests(unittest.TestCase):
         )
         with tempfile.TemporaryDirectory() as empty:
             env = dict(os.environ, PYTHONPATH=str(ROOT))
-            result = subprocess.run([sys.executable, "-B", "-c", code], cwd=empty, env=env, capture_output=True,
-                                    text=True, timeout=60)
+            result = subprocess.run(
+                [sys.executable, "-B", "-c", code], cwd=empty, env=env, capture_output=True, text=True, timeout=60
+            )
             self.assertEqual((result.returncode, result.stdout, result.stderr), (0, "True []\n", ""))
             self.assertEqual(os.listdir(empty), [])
 

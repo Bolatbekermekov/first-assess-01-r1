@@ -72,8 +72,24 @@ class ScopeAndRowListTests(ErrorTestCase):
 
     def test_scope_identifiers(self):
         valid = ["a", "Z", "0", "a" * 128, "client_1.2:3-4", "A-b_C.d:E"]
-        invalid = ["", "a" * 129, "_client", ".client", ":client", "-client", "client id", "client/1", "клиент",
-                   "client\n", "ａ", None, 1, True, b"client", StrSubclass("client")]
+        invalid = [
+            "",
+            "a" * 129,
+            "_client",
+            ".client",
+            ":client",
+            "-client",
+            "client id",
+            "client/1",
+            "клиент",
+            "client\n",
+            "\uff41",
+            None,
+            1,
+            True,
+            b"client",
+            StrSubclass("client"),
+        ]
         for key in ("client_id", "campaign_id"):
             for value in valid:
                 with self.subTest(key=key, value=value):
@@ -143,13 +159,23 @@ class ReportSchemaTests(unittest.TestCase):
         self.assertIs(type(self.report["summary"]["total"]), int)
 
     def test_rejected_row(self):
-        expected = {"row_number": 3, "status": "REJECTED", "codes": ["INVALID_COMPANY_NAME"], "normalized": None,
-                    "duplicate_of_row": None}
+        expected = {
+            "row_number": 3,
+            "status": "REJECTED",
+            "codes": ["INVALID_COMPANY_NAME"],
+            "normalized": None,
+            "duplicate_of_row": None,
+        }
         self.assertEqual(self.report["rows"][2], expected)
 
     def test_valid_row(self):
-        expected = {"row_number": 4, "status": "UNIQUE", "codes": ["VALID_RECORD"],
-                    "normalized": valid_row(2, website_url=""), "duplicate_of_row": None}
+        expected = {
+            "row_number": 4,
+            "status": "UNIQUE",
+            "codes": ["VALID_RECORD"],
+            "normalized": valid_row(2, website_url=""),
+            "duplicate_of_row": None,
+        }
         self.assertEqual(self.report["rows"][3], expected)
 
     def test_empty_rows(self):

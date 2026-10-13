@@ -99,16 +99,16 @@ class GroupingTests(unittest.TestCase):
 
     def test_company_name_is_compared_casefolded_after_nfc(self):
         self.assertEqual(
-            outcomes(dict(ROW, company_name="Straße"), dict(ROW, company_name="STRASSE")),
+            outcomes(dict(ROW, company_name="Stra\u00dfe"), dict(ROW, company_name="STRASSE")),
             [UNIQUE, duplicate_of(1)],
         )
         self.assertEqual(
-            outcomes(dict(ROW, company_name="Café"), dict(ROW, company_name="Café")),
+            outcomes(dict(ROW, company_name="Caf\u00e9"), dict(ROW, company_name="Cafe\u0301")),
             [UNIQUE, duplicate_of(1)],
         )
         # U+0130 casefolds to "i" + U+0307, so these names differ under the contract's key.
         self.assertEqual(
-            outcomes(dict(ROW, company_name="İstanbul"), dict(ROW, company_name="istanbul")),
+            outcomes(dict(ROW, company_name="\u0130stanbul"), dict(ROW, company_name="istanbul")),
             [CONFLICT, CONFLICT],
         )
 
@@ -127,8 +127,13 @@ class GroupingTests(unittest.TestCase):
         )
 
     def test_no_fuzzy_matching_across_emails(self):
-        emails = ["buyer@example.test", "buyer+tag@example.test", "b.uyer@example.test", "buyer@example.test.example",
-                  "buyer@exarnple.test"]
+        emails = [
+            "buyer@example.test",
+            "buyer+tag@example.test",
+            "b.uyer@example.test",
+            "buyer@example.test.example",
+            "buyer@exarnple.test",
+        ]
         self.assertEqual(outcomes(*(dict(ROW, contact_email=email) for email in emails)), [UNIQUE] * 5)
 
     def test_interleaved_groups_keep_input_order(self):
@@ -148,8 +153,15 @@ class GroupingTests(unittest.TestCase):
         self.assertEqual(backward[1]["duplicate_of_row"], 1)
 
     def test_summary_counts_rows_not_groups(self):
-        rows = [ROW, dict(ROW), dict(ROW), dict(ROW, contact_email="x@example.test"),
-                dict(ROW, contact_email="y@example.test"), dict(ROW, contact_email="y@example.test", language=""), None]
+        rows = [
+            ROW,
+            dict(ROW),
+            dict(ROW),
+            dict(ROW, contact_email="x@example.test"),
+            dict(ROW, contact_email="y@example.test"),
+            dict(ROW, contact_email="y@example.test", language=""),
+            None,
+        ]
         summary = analyze_rows(rows, scope=SCOPE)["summary"]
         self.assertEqual(summary, {"total": 7, "unique": 2, "duplicate": 2, "conflict": 2, "rejected": 1})
 
