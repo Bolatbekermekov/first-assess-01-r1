@@ -21,9 +21,9 @@ ZIP_PATH = ROOT / "dist" / f"{ZIP_ROOT}.zip"
 MANIFEST = "RETURN_MANIFEST.json"
 RETURN_DOCUMENTS = ("TASK_REPORT.md", "TEST_MATRIX.md", "LIMITATIONS.md", "DECOMPOSITION_PROPOSAL.md")
 SHIPPED_TREES = ("candidate_fixtures/", "docs/", "logs/", "evidence/")
-DEV_ONLY = {".git", "dev", "dist", "out", "compose.yaml", "Makefile"}
+# Top-level entries of the repository that never go into the ZIP: dev environment, build output, repository README.
+DEV_ONLY = {".git", "dev", "dist", "out", "compose.yaml", "Makefile", "README.md"}
 IGNORED_PARTS = {"__pycache__", ".DS_Store", ".ruff_cache", ".mypy_cache"}
-FORBIDDEN_IN_ZIP = IGNORED_PARTS | DEV_ONLY | {"sample_output", "sample_output_csv"}
 ZIP_TIMESTAMP = (2026, 10, 13, 0, 0, 0)
 
 
@@ -42,6 +42,13 @@ def is_shipped(relative: str, original: set[str]) -> bool:
         or (relative.startswith("assess_workbench/") and relative.endswith(".py"))
         or fnmatch.fnmatch(relative, "tests/test_candidate_*.py")
         or relative.startswith(SHIPPED_TREES)
+    )
+
+
+def is_forbidden(name: str) -> bool:
+    parts = PurePosixPath(name).parts[1:]  # below the ZIP root
+    return bool(parts) and (
+        parts[0] in DEV_ONLY or parts[0].startswith("sample_output") or bool(IGNORED_PARTS.intersection(parts))
     )
 
 
@@ -95,7 +102,7 @@ def verify() -> None:
         with zipfile.ZipFile(ZIP_PATH) as archive:
             names = archive.namelist()
             outside = [name for name in names if not name.startswith(f"{ZIP_ROOT}/")]
-            forbidden = [name for name in names if FORBIDDEN_IN_ZIP.intersection(PurePosixPath(name).parts)]
+            forbidden = [name for name in names if is_forbidden(name)]
             if outside or forbidden:
                 raise SystemExit(f"bad layout: outside={outside} forbidden={forbidden}")
             archive.extractall(temporary)
