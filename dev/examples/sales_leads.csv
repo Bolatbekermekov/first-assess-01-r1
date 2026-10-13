@@ -1,0 +1,13 @@
+company_name,contact_email,website_url,country_code,language,source_ref
+"  ТОО  «Алтын Дала» "," Sales@AltynDala.TEST ",https://AltynDala.TEST/contacts,kz,RU-kz,crm:export-1
+тоо «алтын дала»,sales@altyndala.test,https://altyndala.test/contacts,KZ,ru-KZ,excel:october
+ТОО «Алтын Дала»,director@altyndala.test,https://altyndala.test/contacts,KZ,ru-KZ,crm:export-2
+Steppe Logistics,info@steppe-logistics.test,https://steppe-logistics.test,KZ,en,crm:42
+STEPPE LOGISTICS,INFO@steppe-logistics.test,https://steppe-logistics.test,kz,EN,crm:43
+Steppe Logistics,info@steppe-logistics.test,,KZ,en,partner:list-7
+"Nomad Tech, Inc.",sales+kz@nomad-tech.test,https://nomad-tech.test/?utm=crm,,,form:site
+"Nomad Tech, Inc.",sales@nomad-tech.test,https://nomad-tech.test/?utm=crm,,,form:site
+Қазақ Агро,продажи@казагро.test,,KZ,kk,crm:77
+Silk Road Trading,office@silkroad.test,http://silkroad.test,KAZ,russian,crm:78
+,hr@empty.test,https://empty.test/#team,KZ,ru,
+<script>alert('XSS')</script> & Co,security@xss-demo.test,,,,pentest:html

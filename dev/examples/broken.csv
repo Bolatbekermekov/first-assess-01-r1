@@ -1,0 +1,3 @@
+company_name,contact_email,website_url,country_code,language,source_ref
+Alpha,alpha@example.test,https://alpha.example.test,KZ,ru,crm:1
+Beta,beta@example.test,KZ,ru,crm:2

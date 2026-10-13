@@ -5,11 +5,17 @@
 PY := docker compose run --rm -T py python
 TOOLS := docker compose --profile tools run --rm -T tools
 T :=
+INPUT := dev/examples/sales_leads.csv
+FORMAT = $(if $(filter %.csv %.CSV,$(INPUT)),csv,json)
+CLIENT := synthetic-client
+CAMPAIGN := synthetic-campaign
+SCOPE_ARGS = --client-id $(CLIENT) --campaign-id $(CAMPAIGN)
+# `run` deletes its previous output first, so its directory cannot be redirected from the command line.
+override RUN_DIR = out/$(basename $(notdir $(INPUT)))
 LINT_PATHS := assess_workbench tests/test_candidate_*.py
 RUFF_RULES := --line-length 120 --target-version py312 --select E,W,F,I,B,UP,SIM,C4,RUF --ignore RUF001,RUF002,RUF003
-SCOPE_ARGS := --client-id synthetic-client --campaign-id synthetic-campaign
 
-.PHONY: help all check lint test acceptance demo shell format mutation zip release clean
+.PHONY: help all check lint test acceptance demo run shell format mutation zip release clean
 
 help: ## Показать этот список
 	@awk 'BEGIN { FS = ":.*## " } /^[a-z]+:.*## / { printf "  make %-11s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -36,6 +42,14 @@ demo: ## CLI на fixtures/leads.json и leads.csv, отчёты в out/json и 
 	$(PY) -m assess_workbench --input fixtures/leads.json --format json $(SCOPE_ARGS) --out-dir out/json
 	$(PY) -m assess_workbench --input fixtures/leads.csv --format csv $(SCOPE_ARGS) --out-dir out/csv
 	@echo "HTML-отчёт: open out/json/report.html"
+
+run: ## Отчёт по файлу: make run INPUT=путь (по умолчанию dev/examples/sales_leads.csv)
+	@case "$(INPUT)" in ""|/*|../*|*/../*) echo "Укажите файл внутри проекта относительным путём: make run INPUT=dev/examples/sales_leads.csv"; exit 2 ;; esac
+	@test -f "$(INPUT)" || { echo "Нет такого файла: $(INPUT)"; exit 2; }
+	rm -rf "$(RUN_DIR)"
+	mkdir -p out
+	$(PY) -m assess_workbench --input "$(INPUT)" --format $(FORMAT) $(SCOPE_ARGS) --out-dir "$(RUN_DIR)"
+	@echo "HTML-отчёт: open $(RUN_DIR)/report.html"
 
 shell: ## bash в контейнере с Python 3.12
 	docker compose run --rm py bash
