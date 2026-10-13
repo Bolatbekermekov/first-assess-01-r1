@@ -1,0 +1,4 @@
+#!/bin/sh
+# Dev-only: run the CPython 3.12 that uv already installed on this Mac, without writing bytecode caches.
+# Fallback while Docker Desktop cannot pull images; the container in compose.yaml remains the primary sandbox.
+exec env PYTHONDONTWRITEBYTECODE=1 "$HOME/.local/share/uv/python/cpython-3.12-macos-aarch64-none/bin/python3.12" -B "$@"
