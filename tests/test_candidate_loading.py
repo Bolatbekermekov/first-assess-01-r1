@@ -3,9 +3,11 @@
 import csv
 import io
 import json
+import sys
 import traceback
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from assess_workbench.api import WorkbenchError, analyze_rows, load_rows
 
@@ -201,8 +203,16 @@ class JsonDocumentTests(LoaderTestCase):
         self.assert_error("INVALID_DOCUMENT", b"[" * 100_000 + b"]" * 100_000, "json")
         self.assertEqual(len(load_rows(b"[" * 50 + b"]" * 50, format="json")), 1)
 
-    def test_huge_integer_is_a_document_error(self):
-        self.assert_error("INVALID_DOCUMENT", b"[" + b"9" * 5000 + b"]", "json")  # CP1 A6
+    def test_nesting_limit_does_not_follow_sys_setrecursionlimit(self):
+        # CP1 A7: the C scanner counts its own depth, so a caller's low recursion limit must not reject 400 levels.
+        self.addCleanup(sys.setrecursionlimit, sys.getrecursionlimit())
+        arrays = b"[" * 400 + b"]" * 400
+        objects = b"[" + b'{"a": ' * 400 + b"1" + b"}" * 400 + b"]"
+        for limit in (200, 100_000):
+            with self.subTest(limit=limit):
+                sys.setrecursionlimit(limit)
+                self.assertEqual([len(load_rows(data, format="json")) for data in (arrays, objects)], [1, 1])
+                self.assert_error("INVALID_DOCUMENT", b"[" * 100_000 + b"]" * 100_000, "json")
 
     def test_out_of_range_float_is_passed_to_the_analyzer(self):
         rows = load_rows(b"[1e400, -1e400]", format="json")  # CP1 A11
@@ -214,6 +224,67 @@ class JsonDocumentTests(LoaderTestCase):
         rows = load_rows(json.dumps([dict(ROW, company_name="\ud800")]).encode("ascii"), format="json")
         self.assertEqual(rows[0]["company_name"], "\ud800")
         self.assertEqual(analyze_rows(rows, scope=SCOPE)["rows"][0]["codes"], ["INVALID_COMPANY_NAME"])
+
+
+class IntegerDigitLimitTests(LoaderTestCase):
+    """CP1 A6 as revised in R2: a JSON integer of any length is a valid number that the analyzer rejects.
+
+    int() refuses literals longer than sys.get_int_max_str_digits(), a process-wide setting. load_rows must give the
+    same result under every value of it and must not change it. Literals are built as text and expected values by
+    arithmetic, because converting between the two is exactly what the setting restricts.
+    """
+
+    LIMITS = (4300, 640, 0)  # the CPython default, the smallest non-zero value, no limit
+
+    def setUp(self):
+        self.addCleanup(sys.set_int_max_str_digits, sys.get_int_max_str_digits())
+
+    def test_review_reproduction_is_a_rejected_row_under_every_limit(self):
+        data = b"[" + b"9" * 4301 + b"]"
+        for limit in self.LIMITS:
+            with self.subTest(limit=limit):
+                sys.set_int_max_str_digits(limit)
+                rows = load_rows(data, format="json")
+                self.assertEqual(rows, [10**4301 - 1])
+                row = analyze_rows(rows, scope=SCOPE)["rows"][0]
+                self.assertEqual((row["status"], row["codes"]), ("REJECTED", ["INVALID_ROW_SCHEMA"]))
+                self.assertEqual(sys.get_int_max_str_digits(), limit)
+
+    def test_long_integers_keep_their_exact_value_at_any_depth(self):
+        cases = [
+            ("9" * 640, 10**640 - 1),
+            ("9" * 641, 10**641 - 1),
+            ("-1" + "0" * 1280, -(10**1280)),
+            ("8" * 1280, 8 * (10**1280 - 1) // 9),
+            ("10203" * 2000, 10203 * (10**10_000 - 1) // (10**5 - 1)),
+            ("-1" + "0" * 99_999 + "7", -(10**100_000 + 7)),
+        ]
+        for limit in self.LIMITS:
+            sys.set_int_max_str_digits(limit)
+            for literal, expected in cases:
+                with self.subTest(limit=limit, digits=len(literal.lstrip("-"))):
+                    data = f'[{literal}, [{literal}], {{"k": {literal}}}]'.encode()
+                    rows = load_rows(data, format="json")
+                    self.assertEqual(rows, [expected, [expected], {"k": expected}])
+                    self.assertIs(type(rows[0]), int)
+
+    def test_long_integer_field_value_reaches_its_field_rule(self):
+        data = json.dumps([dict(ROW, company_name=0)]).replace('"company_name": 0', '"company_name": ' + "7" * 5000)
+        for limit in self.LIMITS:
+            with self.subTest(limit=limit):
+                sys.set_int_max_str_digits(limit)
+                rows = load_rows(data.encode(), format="json")
+                self.assertEqual(rows[0]["company_name"], 7 * (10**5000 - 1) // 9)
+                self.assertEqual(analyze_rows(rows, scope=SCOPE)["rows"][0]["codes"], ["INVALID_COMPANY_NAME"])
+
+    def test_the_process_wide_setting_is_never_changed(self):
+        sys.set_int_max_str_digits(4300)
+        refuse = mock.Mock(side_effect=AssertionError("load_rows changed sys.set_int_max_str_digits"))
+        with mock.patch.object(sys, "set_int_max_str_digits", refuse):
+            rows = load_rows(b"[" + b"9" * 4301 + b"]", format="json")
+        refuse.assert_not_called()
+        self.assertEqual(rows, [10**4301 - 1])
+        self.assertEqual(sys.get_int_max_str_digits(), 4300)
 
 
 class CsvDocumentTests(LoaderTestCase):

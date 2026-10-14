@@ -3,6 +3,7 @@
 import csv
 import io
 import json
+import sys
 import threading
 from typing import Any, Final, NoReturn
 
@@ -21,6 +22,9 @@ _FORMATS: Final = frozenset({"json", "csv"})
 _FIELD_SET: Final = frozenset(FIELDS)
 # csv.field_size_limit is process-wide state; serialize our temporary change of it.
 _CSV_FIELD_LIMIT_LOCK: Final = threading.Lock()
+# int() never applies sys.set_int_max_str_digits() to a literal of at most this many digits: it is the smallest
+# non-zero value the setting accepts (640 in CPython 3.12).
+_INT_CHUNK_DIGITS: Final = sys.int_info.str_digits_check_threshold
 
 
 def load(data: object, data_format: object) -> list[Any]:
@@ -64,10 +68,38 @@ def _reject_constant(_name: str) -> NoReturn:
     raise _RejectedJson
 
 
+def _exact_int(literal: str) -> int:
+    """Value of a JSON integer literal under any sys.set_int_max_str_digits() setting, which is left unchanged.
+
+    The default parse_int, int(), rejects literals longer than that process-wide setting, so the same document would
+    load or fail depending on the interpreter. Chunks short enough to be exempt are converted with int() and merged
+    pairwise by arithmetic, which keeps the cost close to that of int() without the limit (CP1 A6, revised in R2).
+    """
+    negative = literal.startswith("-")
+    digits = literal[1:] if negative else literal
+    if len(digits) <= _INT_CHUNK_DIGITS:
+        return int(literal)
+    # Most significant chunk first; every other chunk has exactly `width` digits.
+    width = _INT_CHUNK_DIGITS
+    head = len(digits) % width or width
+    values = [int(digits[:head])] + [int(digits[start : start + width]) for start in range(head, len(digits), width)]
+    scale = 10**width
+    while len(values) > 1:
+        # Merge neighbours from the least significant end, so a leftover chunk is the most significant one.
+        odd = len(values) % 2
+        pairs = zip(values[odd::2], values[odd + 1 :: 2], strict=True)
+        values = values[:odd] + [high * scale + low for high, low in pairs]
+        scale *= scale
+    return -values[0] if negative else values[0]
+
+
 def _parse_json(text: str) -> list[Any]:
     try:
         document: Any = json.loads(
-            text, object_pairs_hook=_object_without_duplicate_keys, parse_constant=_reject_constant
+            text,
+            object_pairs_hook=_object_without_duplicate_keys,
+            parse_constant=_reject_constant,
+            parse_int=_exact_int,
         )
     except (ValueError, RecursionError):
         document = None  # JSONDecodeError.doc holds the whole input, so raise outside the handler
