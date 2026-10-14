@@ -1,5 +1,5 @@
 $ python -m unittest discover -s tests -p 'test_candidate_*.py' -v
-# started_utc: 2026-10-14T05:20:23+00:00
+# started_utc: 2026-10-14T12:24:09+00:00
 # cwd: /work
 # python: 3.12.13 (CPython)
 # platform: Linux-6.12.76-linuxkit-aarch64-with-glibc2.41
@@ -8,8 +8,10 @@ $ python -m unittest discover -s tests -p 'test_candidate_*.py' -v
 ## stderr
 test_abbreviated_options_are_rejected (test_candidate_cli.ArgumentTests.test_abbreviated_options_are_rejected) ... ok
 test_missing_arguments_are_reported_by_argparse (test_candidate_cli.ArgumentTests.test_missing_arguments_are_reported_by_argparse) ... ok
+test_directory_owned_by_another_user_swapped_in_is_refused (test_candidate_cli.DirectorySwapTests.test_directory_owned_by_another_user_swapped_in_is_refused) ... ok
 test_directory_replaced_after_it_was_opened_is_not_reported_as_created (test_candidate_cli.DirectorySwapTests.test_directory_replaced_after_it_was_opened_is_not_reported_as_created) ... ok
-test_empty_directory_swapped_in_after_mkdir_cannot_be_detected (test_candidate_cli.DirectorySwapTests.test_empty_directory_swapped_in_after_mkdir_cannot_be_detected) ... ok
+test_group_or_world_accessible_directory_swapped_in_is_refused (test_candidate_cli.DirectorySwapTests.test_group_or_world_accessible_directory_swapped_in_is_refused) ... ok
+test_identical_owner_only_directory_swapped_in_cannot_be_detected (test_candidate_cli.DirectorySwapTests.test_identical_owner_only_directory_swapped_in_cannot_be_detected) ... ok
 test_populated_directory_swapped_in_after_mkdir_receives_nothing (test_candidate_cli.DirectorySwapTests.test_populated_directory_swapped_in_after_mkdir_receives_nothing) ... ok
 test_symlink_swapped_in_after_mkdir_is_not_followed (test_candidate_cli.DirectorySwapTests.test_symlink_swapped_in_after_mkdir_is_not_followed) ... ok
 test_keyboard_interrupt_is_not_swallowed (test_candidate_cli.InProcessTests.test_keyboard_interrupt_is_not_swallowed) ... ok
@@ -158,6 +160,6 @@ test_scope_identifiers (test_candidate_report.ScopeAndRowListTests.test_scope_id
 test_scope_must_be_an_exact_dict_with_exactly_three_keys (test_candidate_report.ScopeAndRowListTests.test_scope_must_be_an_exact_dict_with_exactly_three_keys) ... ok
 
 ----------------------------------------------------------------------
-Ran 150 tests in 5.807s
+Ran 152 tests in 6.007s
 
 OK

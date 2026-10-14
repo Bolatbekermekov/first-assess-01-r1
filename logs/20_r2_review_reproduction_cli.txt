@@ -9,7 +9,7 @@ for out in /tmp/out-640 /tmp/out-0 /tmp/out-env; do
   cmp /tmp/out-4300/report.json "$out/report.json" && cmp /tmp/out-4300/report.html "$out/report.html" && echo "$out: report.json and report.html byte-identical to /tmp/out-4300"
 done
 python -c '"'"'import json; row = json.load(open("/tmp/out-4300/report.json", encoding="utf-8"))["rows"][0]; print("row 1:", row["status"], row["codes"])'"'"''
-# started_utc: 2026-10-14T05:21:08+00:00
+# started_utc: 2026-10-14T12:25:13+00:00
 # cwd: /work
 # python: 3.12.13 (CPython)
 # platform: Linux-6.12.76-linuxkit-aarch64-with-glibc2.41
