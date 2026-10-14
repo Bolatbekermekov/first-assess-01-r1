@@ -287,74 +287,99 @@ class InProcessTests(CliTestCase):
 
 @unittest.skipUnless(POSIX and DIR_FD, "needs dir_fd and O_NOFOLLOW")
 class DirectorySwapTests(CliTestCase):
-    """Another process replaces the new directory before or while the reports are written (LIMITATIONS.md A16).
+    """Another process replaces a directory in the create/open window (LIMITATIONS.md A16).
 
-    mkdir() returns no handle, so the CLI has to open the directory again by its path. The owner/mode/empty checks and
-    the post-write samestat are defence-in-depth: they catch opportunistic swaps but do NOT prove the opened directory
-    is the one this run created, because a process with write rights on the parent can rename an already-qualifying
-    directory into place. Protection against another user therefore comes from refusing an untrusted-writable parent
-    (ParentTrustTests), not from these property checks. These tests swap the path in the mkdir->open window, in
-    process, the way a same-user process could (R4; docs/R4_REWORK.md).
+    The CLI pins the parent by descriptor and creates and opens out-dir relative to it, so it cannot be redirected to
+    a substituted parent, and refuses (IO_ERROR) if after writing the path no longer resolves to the pinned parent
+    and the directory it created. The owner/mode/empty checks are defence-in-depth, not a proof of identity. These
+    tests swap directories in that window, in process, the way a same-user process could; protection against another
+    user comes from refusing an untrusted-writable parent (ParentTrustTests). R5; docs/R5_REWORK.md.
     """
 
-    def swap_after_mkdir(self, replace):
-        """Patch os.mkdir: create the directory for real, remove it, then let `replace` put something at its path."""
+    def swap_created_out_dir(self, out, replace):
+        """Patch os.mkdir so that, right after the real (parent-relative) creation of out-dir, `replace` swaps it.
+
+        The CLI creates out-dir relative to the pinned parent; `out` is that same directory by path, so the swap
+        removes it and lets `replace` (os.rename/os.symlink only — never mkdir, which the mock intercepts) put
+        something else there, as a same-user process could."""
         real_mkdir = os.mkdir
 
         def mkdir_then_replace(path, *args, **kwargs):
-            real_mkdir(path, *args, **kwargs)
-            bare = os.fspath(path).rstrip("/")
-            os.rmdir(bare)
-            replace(bare)
+            real_mkdir(path, *args, **kwargs)  # create out-dir relative to the pinned parent descriptor
+            os.rmdir(out)  # the same directory, addressed by path
+            replace(out)
 
         return mock.patch("assess_workbench.cli.os.mkdir", side_effect=mkdir_then_replace)
 
-    def test_symlink_swapped_in_after_mkdir_is_not_followed(self):
-        # A trailing slash makes the kernel resolve a final symlink even with O_NOFOLLOW, so it is checked too.
+    def test_parent_renamed_and_substituted_after_pin_is_not_reported_as_created(self):
+        # Reviewer's R5 reproduction: after out-dir is created, rename the parent to "moved" and drop a prepared
+        # "spare" (holding an empty "out") in its place. The reports must not land in the spare and success must not
+        # be claimed. The parent is pinned by descriptor, so the reports go to the directory this run created (under
+        # "moved"); the final parent samestat then sees the path no longer resolves to the pinned parent -> IO_ERROR.
+        parent = self.tmp / "parent"
+        parent.mkdir(mode=0o700)
+        moved, spare = self.tmp / "moved", self.tmp / "spare"
+        spare.mkdir(mode=0o700)
+        (spare / "out").mkdir(mode=0o700)
+        out = parent / "out"
+        real_mkdir = os.mkdir
+
+        def mkdir_then_swap_parent(path, *args, **kwargs):
+            real_mkdir(path, *args, **kwargs)  # create out relative to the pinned parent descriptor
+            os.rename(parent, moved)  # the pinned descriptor now refers to "moved"
+            os.rename(spare, parent)  # a prepared spare (with an empty "out") takes the parent path
+
+        with mock.patch("assess_workbench.cli.os.mkdir", side_effect=mkdir_then_swap_parent):
+            result = self.run_main(arguments(FIX / "leads.json", out))
+        self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
+        self.assertEqual(list((parent / "out").iterdir()), [])  # the substitute received nothing
+        self.assertEqual(sorted(p.name for p in (moved / "out").iterdir()), ["report.html", "report.json"])
+
+    def test_symlink_swapped_in_as_out_dir_is_not_followed(self):
+        # out-dir is opened relative to the pinned parent with the bare name and O_NOFOLLOW, so a trailing slash on
+        # the argument cannot make the kernel follow a swapped-in symlink.
         for suffix in ("", "/", "//"):
             with self.subTest(suffix=suffix):
                 victim = self.tmp / f"victim{len(suffix)}"
-                victim.mkdir(mode=0o700)  # owner-only, so the mode check cannot mask a trailing-slash symlink follow
+                victim.mkdir(mode=0o700)
                 out = self.tmp / f"out{len(suffix)}"
-                with self.swap_after_mkdir(lambda path, victim=victim: os.symlink(victim, path)):
+                with self.swap_created_out_dir(out, lambda path, victim=victim: os.symlink(victim, path)):
                     result = self.run_main(arguments(FIX / "leads.json", f"{out}{suffix}"))
                 self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
                 self.assertEqual(list(victim.iterdir()), [])
                 self.assertTrue(out.is_symlink())
 
-    def test_populated_directory_swapped_in_after_mkdir_receives_nothing(self):
+    def test_populated_directory_swapped_in_receives_nothing(self):
         substitute = self.tmp / "substitute"
         substitute.mkdir(mode=0o700)  # owner-only, so it is the non-empty check alone that rejects it
         (substitute / "keep.txt").write_bytes(b"keep")
         out = self.tmp / "out"
-        with self.swap_after_mkdir(lambda path: os.rename(substitute, path)):
+        with self.swap_created_out_dir(out, lambda path: os.rename(substitute, path)):
             result = self.run_main(arguments(FIX / "leads.json", out))
         self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
         self.assertEqual(snapshot(out), {"keep.txt": b"keep"})
 
     def test_group_or_world_accessible_directory_swapped_in_is_refused(self):
-        # R3: a substitute left readable by group/other is refused before any report is written. This catches the
-        # common same-user swap, whose directory keeps the umask-default mode rather than the CLI's own 0o700.
+        # Defence-in-depth: a substitute left readable by group/other is refused before any report is written.
         substitute = self.tmp / "substitute"
         substitute.mkdir()
         substitute.chmod(0o755)
         out = self.tmp / "out"
-        with self.swap_after_mkdir(lambda path: os.rename(substitute, path)):
+        with self.swap_created_out_dir(out, lambda path: os.rename(substitute, path)):
             result = self.run_main(arguments(FIX / "leads.json", out))
         self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
         self.assertEqual(list(out.iterdir()), [])
 
-    def test_same_user_swap_in_a_trusted_parent_is_the_only_residual(self):
-        # A16, pinned on purpose with a real rename of a pre-existing directory (not a geteuid mock). The parent here
-        # (self.tmp) is owner-only, so no OTHER user could rename into it; this models the same-user/root case, which
-        # is inside the caller's own trust domain. The owner/mode/empty checks cannot tell this substitute apart from
-        # the one mkdir() made — which is exactly why they are not relied on as proof (ParentTrustTests carries the
-        # real protection). What still holds: nothing is overwritten or deleted, out-dir ends up with the two reports.
+    def test_same_user_identical_substitute_in_trusted_parent_is_the_only_residual(self):
+        # A16, pinned on purpose with a real rename of a pre-existing directory. The parent (self.tmp) is owner-only,
+        # so no OTHER user could rename into it; this models the same-user/root case, inside the caller's own trust
+        # domain. The property checks cannot tell this substitute apart from the one mkdir() made — which is why they
+        # are not relied on as proof. Nothing is overwritten; out-dir ends up with the two reports.
         substitute = self.tmp / "substitute"
         substitute.mkdir(mode=0o700)
         identity = (substitute.stat().st_dev, substitute.stat().st_ino)
         out = self.tmp / "out"
-        with self.swap_after_mkdir(lambda path: os.rename(substitute, path)):
+        with self.swap_created_out_dir(out, lambda path: os.rename(substitute, path)):
             result = self.run_main(arguments(FIX / "leads.json", out))
         self.assertEqual(result, (0, "REPORT_CREATED\n", ""))
         self.assertEqual((out.stat().st_dev, out.stat().st_ino), identity)
@@ -383,14 +408,14 @@ class ParentTrustTests(CliTestCase):
     """The reports may only be written when no untrusted user can rename a directory into the out-dir path.
 
     Property checks on the opened directory (owner/mode/empty) cannot prove it is the one this run created: a process
-    with write rights on the parent can rename an already owner-only, empty directory into place. So before writing,
-    the CLI requires the parent to be trusted — owned by this user or root and either not writable by group/other or
-    carrying the sticky bit. Under that condition no other user can place or replace the out-dir entry; otherwise the
-    CLI fails with IO_ERROR before any report is written. This is the proposed operating condition in
-    docs/R4_REWORK.md (not yet agreed with the reviewer).
+    with write rights on the parent can rename an already owner-only, empty directory into place. So the parent is
+    pinned and checked BEFORE out-dir is created, and must be trusted — owned by this user or root and either not
+    writable by group/other or carrying the sticky bit. Under that condition no other user can place or replace the
+    out-dir entry; otherwise the CLI fails with IO_ERROR before out-dir is even created. This is the proposed
+    operating condition in docs/R5_REWORK.md (not yet agreed with the reviewer).
     """
 
-    def test_untrusted_writable_parent_fails_before_writing(self):
+    def test_untrusted_writable_parent_fails_before_creating_out_dir(self):
         parent = self.tmp / "shared"
         parent.mkdir()
         parent.chmod(0o777)  # writable by group/other, no sticky bit: another user could substitute the out-dir
@@ -398,7 +423,7 @@ class ParentTrustTests(CliTestCase):
         out = parent / "out"
         result = self.run_main(arguments(FIX / "leads.json", out))
         self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
-        self.assertEqual(list(out.iterdir()), [])  # directory was created but left empty; no report written
+        self.assertFalse(out.exists())  # refused before creating out-dir: nothing created in the untrusted parent
 
     def test_sticky_world_writable_parent_is_trusted(self):
         parent = self.tmp / "tmplike"

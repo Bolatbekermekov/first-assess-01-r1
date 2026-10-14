@@ -27,12 +27,15 @@ _NEW_FILE_FLAGS: Final = (
     | getattr(os, "O_CLOEXEC", 0)
     | getattr(os, "O_BINARY", 0)
 )
-# Working relative to a directory descriptor needs open/stat with dir_fd and listdir(fd); POSIX systems have them.
+# Creating and inspecting relative to a directory descriptor needs mkdir/open/stat with dir_fd and listdir(fd).
 _DIRECTORY_FD_SUPPORTED: Final = (
-    os.open in os.supports_dir_fd and os.stat in os.supports_dir_fd and os.listdir in os.supports_fd
+    os.mkdir in os.supports_dir_fd
+    and os.open in os.supports_dir_fd
+    and os.stat in os.supports_dir_fd
+    and os.listdir in os.supports_fd
 )
-# out-dir is created owner-only: the reports hold contact data, and the mode also marks the directory this process
-# made. A substitute left accessible to group/other (the mode a careless same-user swap keeps) is then refused.
+# out-dir is created owner-only: the reports hold contact data. The closed mode is also used as a defence-in-depth
+# signal (a substitute left accessible to group/other is refused); it is not treated as proof of the directory.
 _NEW_DIRECTORY_MODE: Final = 0o700
 
 
@@ -53,13 +56,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     except WorkbenchError as error:
         return _fail(error.code)
     try:
-        os.mkdir(arguments.out_dir, _NEW_DIRECTORY_MODE)
-    except FileExistsError:  # any existing path, including a (dangling) symlink, or a lost race
+        _create_and_write(arguments.out_dir, documents)
+    except FileExistsError:  # any existing path, including a (dangling) symlink, or a lost mkdir race
         return _fail(OUTPUT_EXISTS)
-    except OSError:
-        return _fail(IO_ERROR)
-    try:
-        _write_new_files(arguments.out_dir, documents)
     except OSError:
         return _fail(IO_ERROR)
     sys.stdout.write("REPORT_CREATED\n")
@@ -98,39 +97,41 @@ def _report_json(report: Report) -> bytes:
     return (json.dumps(report, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
 
 
-def _write_new_files(directory: str, documents: Mapping[str, bytes]) -> None:
-    """Write the reports into the directory just made at `directory`, never following or replacing a path.
+def _create_and_write(directory: str, documents: Mapping[str, bytes]) -> None:
+    """Create out-dir and write the reports, pinning the parent first so the path cannot be redirected under us.
 
-    mkdir() returns no handle and POSIX offers no atomic "create and open a directory", so the directory is opened
-    again by its path. That lookup is a race: a process with write rights on the parent can rename another directory
-    into the out-dir name in between. Properties of the opened directory (owner, mode, emptiness) cannot prove it is
-    the one this run created — such a substitute can be made to match them — so protection against another user rests
-    on the parent. Unless the parent cannot be written by untrusted users (see _parent_is_trusted), substitution
-    cannot be ruled out and the reports are not written (IO_ERROR before writing). Under a trusted parent no other
-    user can place or replace the out-dir entry. The owner/mode/empty check and the final samestat stay only as
-    defence-in-depth against same-user mistakes and a post-open swap; they are not relied on as proof. The
-    trusted-parent requirement is a proposed operating condition (docs/R4_REWORK.md), pending the reviewer's decision.
+    POSIX cannot prove that a directory opened by name is the one this run created (mkdir returns no handle; there is
+    no renameat2(RENAME_NOREPLACE) or directory O_TMPFILE in the standard library). So the parent is opened, pinned by
+    descriptor and checked for trust BEFORE out-dir is created, and out-dir is then created and written relative to
+    that descriptor — never by a path that could be re-resolved to a substituted parent. A parent that untrusted
+    users could write to cannot be made safe and gives IO_ERROR before anything is created. After writing, success is
+    claimed only if out-dir is still the directory we created and the parent path still resolves to the pinned parent
+    (samestat); otherwise IO_ERROR. The owner/mode/empty check is defence-in-depth, not a proof of identity. The
+    trusted-parent requirement is a proposed operating condition (docs/R5_REWORK.md), pending the reviewer's decision.
     """
-    if not _DIRECTORY_FD_SUPPORTED:  # e.g. Windows: fall back to exclusive creation by full path
+    if not _DIRECTORY_FD_SUPPORTED:  # e.g. Windows: exclusive creation by full path, without the parent pinning below
+        os.mkdir(directory, _NEW_DIRECTORY_MODE)
         for name, content in documents.items():
             _write_new_file(os.path.join(directory, name), content, dir_fd=None)
         return
-    # A trailing slash would make the kernel resolve a final symlink despite O_NOFOLLOW; mkdir() has succeeded, so the
-    # path is not made of slashes only. The parent is pinned by descriptor so its entries cannot be swapped after the
-    # trust check, and mkdir/open happen relative to it so no parent component can be redirected mid-operation.
-    parent, name = os.path.split(directory.rstrip("/"))
-    parent_fd = os.open(parent or ".", _DIRECTORY_FLAGS)
+    # A trailing slash would let the kernel resolve a final symlink, so strip it: the last component is the out-dir.
+    parent_path, name = os.path.split(directory.rstrip("/"))
+    parent_path = parent_path or "."
+    parent_fd = os.open(parent_path, _DIRECTORY_FLAGS)
     try:
         if not _parent_is_trusted(parent_fd):
-            raise _ForeignDirectoryError  # an untrusted user could substitute out-dir: refuse before writing
+            raise _ForeignDirectoryError  # untrusted users could substitute out-dir here: refuse before creating it
+        os.mkdir(name, _NEW_DIRECTORY_MODE, dir_fd=parent_fd)  # FileExistsError -> OUTPUT_EXISTS; relative to parent
         dir_fd = os.open(name, _DIRECTORY_FLAGS, dir_fd=parent_fd)
         try:
             if not _is_own_empty_directory(dir_fd):
                 raise _ForeignDirectoryError
             for file_name, content in documents.items():
                 _write_new_file(file_name, content, dir_fd=dir_fd)
-            if not os.path.samestat(os.fstat(dir_fd), os.lstat(name, dir_fd=parent_fd)):
-                raise _ForeignDirectoryError
+            out_dir_is_ours = os.path.samestat(os.fstat(dir_fd), os.lstat(name, dir_fd=parent_fd))
+            parent_unchanged = os.path.samestat(os.fstat(parent_fd), os.stat(parent_path))
+            if not (out_dir_is_ours and parent_unchanged):
+                raise _ForeignDirectoryError  # the path was redirected after we pinned the parent: do not claim success
         finally:
             os.close(dir_fd)
     finally:
