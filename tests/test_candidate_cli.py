@@ -289,12 +289,12 @@ class InProcessTests(CliTestCase):
 class DirectorySwapTests(CliTestCase):
     """Another process replaces the new directory before or while the reports are written (LIMITATIONS.md A16).
 
-    mkdir() returns no handle, so the CLI has to open the directory again by its path. These tests swap the path in
-    exactly that window, in process, the way a concurrent process with write access to the parent could. The CLI
-    creates the directory mode 0o700 and, after opening it, refuses any directory that is not owned by this user or
-    is accessible to group/other, so a cross-user swap and a careless same-user swap are both rejected before a byte
-    is written. Only a substitute indistinguishable from what mkdir made — empty, owned by us, owner-only — slips
-    through, and that one can only come from the same user or root (R3; docs/R3_REWORK.md).
+    mkdir() returns no handle, so the CLI has to open the directory again by its path. The owner/mode/empty checks and
+    the post-write samestat are defence-in-depth: they catch opportunistic swaps but do NOT prove the opened directory
+    is the one this run created, because a process with write rights on the parent can rename an already-qualifying
+    directory into place. Protection against another user therefore comes from refusing an untrusted-writable parent
+    (ParentTrustTests), not from these property checks. These tests swap the path in the mkdir->open window, in
+    process, the way a same-user process could (R4; docs/R4_REWORK.md).
     """
 
     def swap_after_mkdir(self, replace):
@@ -344,28 +344,12 @@ class DirectorySwapTests(CliTestCase):
         self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
         self.assertEqual(list(out.iterdir()), [])
 
-    def test_directory_owned_by_another_user_swapped_in_is_refused(self):
-        # R3: a cross-user swap is rejected by the owner check. A different user cannot create a directory owned by
-        # this euid, so patching geteuid() to disagree with the (real, same-user) substitute's owner models exactly
-        # the foreign-ownership the check is there to catch.
-        substitute = self.tmp / "substitute"
-        substitute.mkdir(mode=0o700)  # owner-only, so only the owner check — not the mode check — can reject it
-        out = self.tmp / "out"
-        with (
-            self.swap_after_mkdir(lambda path: os.rename(substitute, path)),
-            mock.patch("assess_workbench.cli.os.geteuid", return_value=os.geteuid() + 1),
-        ):
-            result = self.run_main(arguments(FIX / "leads.json", out))
-        self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
-        self.assertEqual(list(out.iterdir()), [])
-
-    def test_identical_owner_only_directory_swapped_in_cannot_be_detected(self):
-        # Narrowed residual A16, pinned on purpose: only a directory that is empty, owned by this user and closed to
-        # group/other — i.e. indistinguishable from the one mkdir(0o700) created — slips through. Such a substitute
-        # can only be produced by the same user or root, which is inside the caller's own trust domain. What still
-        # holds: nothing is overwritten or deleted, and out-dir ends up holding exactly the two reports. A cross-user
-        # swap is rejected by the owner check, a group/other-accessible one by the mode check. If this test starts
-        # failing, update LIMITATIONS.md A16.
+    def test_same_user_swap_in_a_trusted_parent_is_the_only_residual(self):
+        # A16, pinned on purpose with a real rename of a pre-existing directory (not a geteuid mock). The parent here
+        # (self.tmp) is owner-only, so no OTHER user could rename into it; this models the same-user/root case, which
+        # is inside the caller's own trust domain. The owner/mode/empty checks cannot tell this substitute apart from
+        # the one mkdir() made — which is exactly why they are not relied on as proof (ParentTrustTests carries the
+        # real protection). What still holds: nothing is overwritten or deleted, out-dir ends up with the two reports.
         substitute = self.tmp / "substitute"
         substitute.mkdir(mode=0o700)
         identity = (substitute.stat().st_dev, substitute.stat().st_ino)
@@ -392,6 +376,43 @@ class DirectorySwapTests(CliTestCase):
         self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
         self.assertEqual(list(out.iterdir()), [])
         self.assertEqual(sorted(snapshot(moved)), ["report.html", "report.json"])
+
+
+@unittest.skipUnless(POSIX and DIR_FD, "needs dir_fd and O_NOFOLLOW")
+class ParentTrustTests(CliTestCase):
+    """The reports may only be written when no untrusted user can rename a directory into the out-dir path.
+
+    Property checks on the opened directory (owner/mode/empty) cannot prove it is the one this run created: a process
+    with write rights on the parent can rename an already owner-only, empty directory into place. So before writing,
+    the CLI requires the parent to be trusted — owned by this user or root and either not writable by group/other or
+    carrying the sticky bit. Under that condition no other user can place or replace the out-dir entry; otherwise the
+    CLI fails with IO_ERROR before any report is written. This is the proposed operating condition in
+    docs/R4_REWORK.md (not yet agreed with the reviewer).
+    """
+
+    def test_untrusted_writable_parent_fails_before_writing(self):
+        parent = self.tmp / "shared"
+        parent.mkdir()
+        parent.chmod(0o777)  # writable by group/other, no sticky bit: another user could substitute the out-dir
+        self.addCleanup(parent.chmod, 0o700)
+        out = parent / "out"
+        result = self.run_main(arguments(FIX / "leads.json", out))
+        self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
+        self.assertEqual(list(out.iterdir()), [])  # directory was created but left empty; no report written
+
+    def test_sticky_world_writable_parent_is_trusted(self):
+        parent = self.tmp / "tmplike"
+        parent.mkdir()
+        parent.chmod(0o1777)  # world-writable but sticky, like /tmp: non-owners cannot rename our entry
+        self.addCleanup(parent.chmod, 0o700)
+        out = parent / "out"
+        self.assertEqual(self.run_main(arguments(FIX / "leads.json", out)), (0, "REPORT_CREATED\n", ""))
+        self.assertEqual((out / "report.json").read_bytes(), EXPECTED_JSON)
+
+    def test_owner_only_parent_is_trusted(self):
+        out = self.tmp / "out"  # self.tmp is a mkdtemp directory: owner-only, owned by us
+        self.assertEqual(self.run_main(arguments(FIX / "leads.json", out)), (0, "REPORT_CREATED\n", ""))
+        self.assertEqual((out / "report.json").read_bytes(), EXPECTED_JSON)
 
 
 if __name__ == "__main__":

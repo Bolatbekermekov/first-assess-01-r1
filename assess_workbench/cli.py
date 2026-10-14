@@ -27,8 +27,10 @@ _NEW_FILE_FLAGS: Final = (
     | getattr(os, "O_CLOEXEC", 0)
     | getattr(os, "O_BINARY", 0)
 )
-# Writing relative to a directory descriptor needs open(dir_fd=...) and listdir(fd); POSIX systems have both.
-_DIRECTORY_FD_SUPPORTED: Final = os.open in os.supports_dir_fd and os.listdir in os.supports_fd
+# Working relative to a directory descriptor needs open/stat with dir_fd and listdir(fd); POSIX systems have them.
+_DIRECTORY_FD_SUPPORTED: Final = (
+    os.open in os.supports_dir_fd and os.stat in os.supports_dir_fd and os.listdir in os.supports_fd
+)
 # out-dir is created owner-only: the reports hold contact data, and the mode also marks the directory this process
 # made. A substitute left accessible to group/other (the mode a careless same-user swap keeps) is then refused.
 _NEW_DIRECTORY_MODE: Final = 0o700
@@ -97,45 +99,65 @@ def _report_json(report: Report) -> bytes:
 
 
 def _write_new_files(directory: str, documents: Mapping[str, bytes]) -> None:
-    """Create each file in the directory just made at `directory`, never following or replacing a path.
+    """Write the reports into the directory just made at `directory`, never following or replacing a path.
 
-    mkdir() returns no handle, so the directory is opened again by its path, and a process allowed to rename entries
-    in the parent can put another directory there first. O_NOFOLLOW and O_DIRECTORY refuse only a symlink or a
-    non-directory. The opened directory is therefore vetted before anything is written (see _is_own_empty_directory):
-    it must be owned by this user, closed to group/other and empty. That rejects a cross-user swap outright — another
-    user cannot create a directory owned by this euid — and a same-user swap that kept a group/other-accessible mode.
-    What still cannot be told apart is an empty, owner-only directory the same user (or root) substituted for the one
-    mkdir() made (LIMITATIONS.md, A16). Success also requires that `directory` still names the directory that
-    received the files.
+    mkdir() returns no handle and POSIX offers no atomic "create and open a directory", so the directory is opened
+    again by its path. That lookup is a race: a process with write rights on the parent can rename another directory
+    into the out-dir name in between. Properties of the opened directory (owner, mode, emptiness) cannot prove it is
+    the one this run created — such a substitute can be made to match them — so protection against another user rests
+    on the parent. Unless the parent cannot be written by untrusted users (see _parent_is_trusted), substitution
+    cannot be ruled out and the reports are not written (IO_ERROR before writing). Under a trusted parent no other
+    user can place or replace the out-dir entry. The owner/mode/empty check and the final samestat stay only as
+    defence-in-depth against same-user mistakes and a post-open swap; they are not relied on as proof. The
+    trusted-parent requirement is a proposed operating condition (docs/R4_REWORK.md), pending the reviewer's decision.
     """
     if not _DIRECTORY_FD_SUPPORTED:  # e.g. Windows: fall back to exclusive creation by full path
         for name, content in documents.items():
             _write_new_file(os.path.join(directory, name), content, dir_fd=None)
         return
-    # With a trailing slash the kernel resolves a final symlink despite O_NOFOLLOW. mkdir() has succeeded, so the
-    # path is not made of slashes only.
-    path = directory.rstrip("/")
-    dir_fd = os.open(path, _DIRECTORY_FLAGS)
+    # A trailing slash would make the kernel resolve a final symlink despite O_NOFOLLOW; mkdir() has succeeded, so the
+    # path is not made of slashes only. The parent is pinned by descriptor so its entries cannot be swapped after the
+    # trust check, and mkdir/open happen relative to it so no parent component can be redirected mid-operation.
+    parent, name = os.path.split(directory.rstrip("/"))
+    parent_fd = os.open(parent or ".", _DIRECTORY_FLAGS)
     try:
-        if not _is_own_empty_directory(dir_fd):
-            raise _ForeignDirectoryError
-        for name, content in documents.items():
-            _write_new_file(name, content, dir_fd=dir_fd)
-        if not os.path.samestat(os.fstat(dir_fd), os.lstat(path)):
-            raise _ForeignDirectoryError
+        if not _parent_is_trusted(parent_fd):
+            raise _ForeignDirectoryError  # an untrusted user could substitute out-dir: refuse before writing
+        dir_fd = os.open(name, _DIRECTORY_FLAGS, dir_fd=parent_fd)
+        try:
+            if not _is_own_empty_directory(dir_fd):
+                raise _ForeignDirectoryError
+            for file_name, content in documents.items():
+                _write_new_file(file_name, content, dir_fd=dir_fd)
+            if not os.path.samestat(os.fstat(dir_fd), os.lstat(name, dir_fd=parent_fd)):
+                raise _ForeignDirectoryError
+        finally:
+            os.close(dir_fd)
     finally:
-        os.close(dir_fd)
+        os.close(parent_fd)
+
+
+def _parent_is_trusted(parent_fd: int) -> bool:
+    """Whether no untrusted user can rename an entry into the out-dir's parent directory.
+
+    True only if the parent is owned by this user or root and is either not writable by group/other or carries the
+    sticky bit. A sticky directory (like /tmp) lets only an entry's own owner rename or remove it, so another user
+    cannot replace the out-dir we create; a directory not writable by group/other cannot be changed by them at all.
+    Ancestors above the immediate parent are assumed trusted — see the operating-condition request in
+    docs/R4_REWORK.md.
+    """
+    status = os.fstat(parent_fd)
+    if status.st_uid not in (0, os.geteuid()):
+        return False
+    return bool(status.st_mode & stat.S_ISVTX) or not status.st_mode & 0o022
 
 
 def _is_own_empty_directory(dir_fd: int) -> bool:
-    """Whether the open directory looks like the one mkdir() just made: owned by us, owner-only and empty.
+    """Defence-in-depth check that the open directory is owned by us, closed to group/other and empty.
 
-    A different user cannot create a directory owned by this euid, so the owner check refuses every cross-user swap.
-    The group/other-mode check refuses a same-user swap that kept the umask-default mode instead of the 0o700 this
-    process creates. An empty, owner-only directory owned by this user is indistinguishable from our own and passes;
-    only the same user or root can produce one. This needs the filesystem to assign a new directory to the creating
-    euid, which ordinary local and tmpfs mounts do but some ownership-remapping network mounts (NFS root/all_squash,
-    some sshfs/SMB) do not — see LIMITATIONS.md section 2 and docs/R3_REWORK.md.
+    This does not prove the directory is the one mkdir() created: a process with write rights on the parent can
+    rename an already owner-only, empty directory into place and pass every check. It only rejects opportunistic
+    swaps and same-user mistakes; protection against another user comes from _parent_is_trusted.
     """
     status = os.fstat(dir_fd)
     return status.st_uid == os.geteuid() and not stat.S_IMODE(status.st_mode) & 0o077 and not os.listdir(dir_fd)
