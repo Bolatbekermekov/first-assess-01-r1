@@ -26,6 +26,12 @@ _NEW_FILE_FLAGS: Final = (
     | getattr(os, "O_CLOEXEC", 0)
     | getattr(os, "O_BINARY", 0)
 )
+# Writing relative to a directory descriptor needs open(dir_fd=...) and listdir(fd); POSIX systems have both.
+_DIRECTORY_FD_SUPPORTED: Final = os.open in os.supports_dir_fd and os.listdir in os.supports_fd
+
+
+class _ForeignDirectoryError(OSError):
+    """out-dir names a directory that already has entries, or no longer names the one that received the reports."""
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -87,15 +93,29 @@ def _report_json(report: Report) -> bytes:
 
 
 def _write_new_files(directory: str, documents: Mapping[str, bytes]) -> None:
-    """Create each file inside the directory this process just made, never following or replacing a path."""
-    if os.open not in os.supports_dir_fd:  # e.g. Windows: fall back to exclusive creation by full path
+    """Create each file in the directory just made at `directory`, never following or replacing a path.
+
+    mkdir() returns no handle, so the directory is opened again by its path, and a process allowed to rename entries
+    in the parent can put another directory there first. O_NOFOLLOW and O_DIRECTORY refuse only a symlink or a
+    non-directory, and nothing tells an empty directory apart from the new one (LIMITATIONS.md, A16). What can be
+    checked is checked: a directory that already has entries receives nothing, and success also requires that
+    `directory` still names the directory that received the files.
+    """
+    if not _DIRECTORY_FD_SUPPORTED:  # e.g. Windows: fall back to exclusive creation by full path
         for name, content in documents.items():
             _write_new_file(os.path.join(directory, name), content, dir_fd=None)
         return
-    dir_fd = os.open(directory, _DIRECTORY_FLAGS)
+    # With a trailing slash the kernel resolves a final symlink despite O_NOFOLLOW. mkdir() has succeeded, so the
+    # path is not made of slashes only.
+    path = directory.rstrip("/")
+    dir_fd = os.open(path, _DIRECTORY_FLAGS)
     try:
+        if os.listdir(dir_fd):
+            raise _ForeignDirectoryError
         for name, content in documents.items():
             _write_new_file(name, content, dir_fd=dir_fd)
+        if not os.path.samestat(os.fstat(dir_fd), os.lstat(path)):
+            raise _ForeignDirectoryError
     finally:
         os.close(dir_fd)
 

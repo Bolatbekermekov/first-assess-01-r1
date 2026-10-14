@@ -1,4 +1,4 @@
-"""Candidate tests: CLI behaviour, exit codes and filesystem safety (CONTRACT.md 7; CP1 A9, A13)."""
+"""Candidate tests: CLI behaviour, exit codes and filesystem safety (CONTRACT.md 7; CP1 A9, A13, A16)."""
 
 import contextlib
 import io
@@ -20,7 +20,7 @@ EXPECTED = json.loads((FIX / "expected_report.json").read_text(encoding="utf-8")
 EXPECTED_JSON = (json.dumps(EXPECTED, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
 POSIX = os.name == "posix"
 IS_ROOT = POSIX and os.geteuid() == 0
-DIR_FD = os.open in os.supports_dir_fd
+DIR_FD = os.open in os.supports_dir_fd and os.listdir in os.supports_fd
 
 
 def run_cli(*args, timeout=120):
@@ -66,6 +66,12 @@ class CliTestCase(unittest.TestCase):
         target.write_bytes((FIX / name).read_bytes())
         return target
 
+    def run_main(self, argv):
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+            code = cli.main([str(item) for item in argv])
+        return code, stdout.getvalue(), stderr.getvalue()
+
 
 class SuccessTests(CliTestCase):
     def test_json_and_csv_produce_the_same_report_files(self):
@@ -103,6 +109,13 @@ class SuccessTests(CliTestCase):
         self.assert_success(run_cli(*arguments(source, self.tmp / "out")))
         self.assertEqual((source.read_bytes(), source.stat().st_mtime_ns), before)
         self.assertEqual(sorted(item.name for item in self.tmp.iterdir()), ["leads.json", "out"])
+
+    def test_out_dir_with_trailing_slashes(self):
+        for suffix in ("/", "//"):
+            with self.subTest(suffix=suffix):
+                out = self.tmp / f"out{len(suffix)}"
+                self.assert_success(run_cli(*arguments(FIX / "leads.json", f"{out}{suffix}")))
+                self.assertEqual((out / "report.json").read_bytes(), EXPECTED_JSON)
 
 
 class OutputExistsTests(CliTestCase):
@@ -239,12 +252,6 @@ class ArgumentTests(CliTestCase):
 
 
 class InProcessTests(CliTestCase):
-    def run_main(self, argv):
-        stdout, stderr = io.StringIO(), io.StringIO()
-        with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
-            code = cli.main([str(item) for item in argv])
-        return code, stdout.getvalue(), stderr.getvalue()
-
     def test_successful_run(self):
         out = self.tmp / "out"
         self.assertEqual(self.run_main(arguments(FIX / "leads.json", out)), (0, "REPORT_CREATED\n", ""))
@@ -269,22 +276,6 @@ class InProcessTests(CliTestCase):
             result = self.run_main(arguments(FIX / "leads.json", self.tmp / "out"))
         self.assertEqual(result, (2, "", "ERROR OUTPUT_EXISTS\n"))
 
-    @unittest.skipUnless(POSIX and DIR_FD, "needs dir_fd and O_NOFOLLOW")
-    def test_directory_swapped_for_a_symlink_after_mkdir_is_not_followed(self):
-        victim = self.tmp / "victim"
-        victim.mkdir()
-        real_mkdir = os.mkdir
-
-        def mkdir_then_swap(path, *args, **kwargs):
-            real_mkdir(path, *args, **kwargs)
-            os.rmdir(path)
-            os.symlink(victim, path)
-
-        with mock.patch("assess_workbench.cli.os.mkdir", side_effect=mkdir_then_swap):
-            result = self.run_main(arguments(FIX / "leads.json", self.tmp / "out"))
-        self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
-        self.assertEqual(list(victim.iterdir()), [])
-
     def test_keyboard_interrupt_is_not_swallowed(self):
         with (
             mock.patch("assess_workbench.cli.load_rows", side_effect=KeyboardInterrupt),
@@ -292,6 +283,81 @@ class InProcessTests(CliTestCase):
         ):
             self.run_main(arguments(FIX / "leads.json", self.tmp / "out"))
         self.assertFalse((self.tmp / "out").exists())
+
+
+@unittest.skipUnless(POSIX and DIR_FD, "needs dir_fd and O_NOFOLLOW")
+class DirectorySwapTests(CliTestCase):
+    """Another process replaces the new directory before or while the reports are written (LIMITATIONS.md A16).
+
+    mkdir() returns no handle, so the CLI has to open the directory again by its path. These tests swap the path in
+    exactly that window, in process, the way a concurrent process with write access to the parent could.
+    """
+
+    def swap_after_mkdir(self, replace):
+        """Patch os.mkdir: create the directory for real, remove it, then let `replace` put something at its path."""
+        real_mkdir = os.mkdir
+
+        def mkdir_then_replace(path, *args, **kwargs):
+            real_mkdir(path, *args, **kwargs)
+            bare = os.fspath(path).rstrip("/")
+            os.rmdir(bare)
+            replace(bare)
+
+        return mock.patch("assess_workbench.cli.os.mkdir", side_effect=mkdir_then_replace)
+
+    def test_symlink_swapped_in_after_mkdir_is_not_followed(self):
+        # A trailing slash makes the kernel resolve a final symlink even with O_NOFOLLOW, so it is checked too.
+        for suffix in ("", "/", "//"):
+            with self.subTest(suffix=suffix):
+                victim = self.tmp / f"victim{len(suffix)}"
+                victim.mkdir()
+                out = self.tmp / f"out{len(suffix)}"
+                with self.swap_after_mkdir(lambda path, victim=victim: os.symlink(victim, path)):
+                    result = self.run_main(arguments(FIX / "leads.json", f"{out}{suffix}"))
+                self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
+                self.assertEqual(list(victim.iterdir()), [])
+                self.assertTrue(out.is_symlink())
+
+    def test_populated_directory_swapped_in_after_mkdir_receives_nothing(self):
+        substitute = self.tmp / "substitute"
+        substitute.mkdir()
+        (substitute / "keep.txt").write_bytes(b"keep")
+        out = self.tmp / "out"
+        with self.swap_after_mkdir(lambda path: os.rename(substitute, path)):
+            result = self.run_main(arguments(FIX / "leads.json", out))
+        self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
+        self.assertEqual(snapshot(out), {"keep.txt": b"keep"})
+
+    def test_empty_directory_swapped_in_after_mkdir_cannot_be_detected(self):
+        # Known limit A16, pinned on purpose: an empty directory renamed into place before the CLI opens the path is
+        # indistinguishable from the one mkdir() created. What still holds: nothing is overwritten or deleted, and the
+        # out-dir ends up holding exactly the two reports. If this test starts failing, update LIMITATIONS.md A16.
+        substitute = self.tmp / "substitute"
+        substitute.mkdir()
+        identity = (substitute.stat().st_dev, substitute.stat().st_ino)
+        out = self.tmp / "out"
+        with self.swap_after_mkdir(lambda path: os.rename(substitute, path)):
+            result = self.run_main(arguments(FIX / "leads.json", out))
+        self.assertEqual(result, (0, "REPORT_CREATED\n", ""))
+        self.assertEqual((out.stat().st_dev, out.stat().st_ino), identity)
+        self.assertEqual(sorted(snapshot(out)), ["report.html", "report.json"])
+        self.assertEqual((out / "report.json").read_bytes(), EXPECTED_JSON)
+
+    def test_directory_replaced_after_it_was_opened_is_not_reported_as_created(self):
+        out, moved = self.tmp / "out", self.tmp / "moved"
+        real_open = os.open
+
+        def replace_before_first_report(path, flags, *args, **kwargs):
+            if os.fspath(path) == "report.json":  # the directory itself is already open at this point
+                os.rename(out, moved)
+                os.mkdir(out)
+            return real_open(path, flags, *args, **kwargs)
+
+        with mock.patch("assess_workbench.cli.os.open", side_effect=replace_before_first_report):
+            result = self.run_main(arguments(FIX / "leads.json", out))
+        self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
+        self.assertEqual(list(out.iterdir()), [])
+        self.assertEqual(sorted(snapshot(moved)), ["report.html", "report.json"])
 
 
 if __name__ == "__main__":
