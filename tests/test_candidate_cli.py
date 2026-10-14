@@ -290,7 +290,11 @@ class DirectorySwapTests(CliTestCase):
     """Another process replaces the new directory before or while the reports are written (LIMITATIONS.md A16).
 
     mkdir() returns no handle, so the CLI has to open the directory again by its path. These tests swap the path in
-    exactly that window, in process, the way a concurrent process with write access to the parent could.
+    exactly that window, in process, the way a concurrent process with write access to the parent could. The CLI
+    creates the directory mode 0o700 and, after opening it, refuses any directory that is not owned by this user or
+    is accessible to group/other, so a cross-user swap and a careless same-user swap are both rejected before a byte
+    is written. Only a substitute indistinguishable from what mkdir made — empty, owned by us, owner-only — slips
+    through, and that one can only come from the same user or root (R3; docs/R3_REWORK.md).
     """
 
     def swap_after_mkdir(self, replace):
@@ -310,7 +314,7 @@ class DirectorySwapTests(CliTestCase):
         for suffix in ("", "/", "//"):
             with self.subTest(suffix=suffix):
                 victim = self.tmp / f"victim{len(suffix)}"
-                victim.mkdir()
+                victim.mkdir(mode=0o700)  # owner-only, so the mode check cannot mask a trailing-slash symlink follow
                 out = self.tmp / f"out{len(suffix)}"
                 with self.swap_after_mkdir(lambda path, victim=victim: os.symlink(victim, path)):
                     result = self.run_main(arguments(FIX / "leads.json", f"{out}{suffix}"))
@@ -320,7 +324,7 @@ class DirectorySwapTests(CliTestCase):
 
     def test_populated_directory_swapped_in_after_mkdir_receives_nothing(self):
         substitute = self.tmp / "substitute"
-        substitute.mkdir()
+        substitute.mkdir(mode=0o700)  # owner-only, so it is the non-empty check alone that rejects it
         (substitute / "keep.txt").write_bytes(b"keep")
         out = self.tmp / "out"
         with self.swap_after_mkdir(lambda path: os.rename(substitute, path)):
@@ -328,12 +332,42 @@ class DirectorySwapTests(CliTestCase):
         self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
         self.assertEqual(snapshot(out), {"keep.txt": b"keep"})
 
-    def test_empty_directory_swapped_in_after_mkdir_cannot_be_detected(self):
-        # Known limit A16, pinned on purpose: an empty directory renamed into place before the CLI opens the path is
-        # indistinguishable from the one mkdir() created. What still holds: nothing is overwritten or deleted, and the
-        # out-dir ends up holding exactly the two reports. If this test starts failing, update LIMITATIONS.md A16.
+    def test_group_or_world_accessible_directory_swapped_in_is_refused(self):
+        # R3: a substitute left readable by group/other is refused before any report is written. This catches the
+        # common same-user swap, whose directory keeps the umask-default mode rather than the CLI's own 0o700.
         substitute = self.tmp / "substitute"
         substitute.mkdir()
+        substitute.chmod(0o755)
+        out = self.tmp / "out"
+        with self.swap_after_mkdir(lambda path: os.rename(substitute, path)):
+            result = self.run_main(arguments(FIX / "leads.json", out))
+        self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
+        self.assertEqual(list(out.iterdir()), [])
+
+    def test_directory_owned_by_another_user_swapped_in_is_refused(self):
+        # R3: a cross-user swap is rejected by the owner check. A different user cannot create a directory owned by
+        # this euid, so patching geteuid() to disagree with the (real, same-user) substitute's owner models exactly
+        # the foreign-ownership the check is there to catch.
+        substitute = self.tmp / "substitute"
+        substitute.mkdir(mode=0o700)  # owner-only, so only the owner check — not the mode check — can reject it
+        out = self.tmp / "out"
+        with (
+            self.swap_after_mkdir(lambda path: os.rename(substitute, path)),
+            mock.patch("assess_workbench.cli.os.geteuid", return_value=os.geteuid() + 1),
+        ):
+            result = self.run_main(arguments(FIX / "leads.json", out))
+        self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
+        self.assertEqual(list(out.iterdir()), [])
+
+    def test_identical_owner_only_directory_swapped_in_cannot_be_detected(self):
+        # Narrowed residual A16, pinned on purpose: only a directory that is empty, owned by this user and closed to
+        # group/other — i.e. indistinguishable from the one mkdir(0o700) created — slips through. Such a substitute
+        # can only be produced by the same user or root, which is inside the caller's own trust domain. What still
+        # holds: nothing is overwritten or deleted, and out-dir ends up holding exactly the two reports. A cross-user
+        # swap is rejected by the owner check, a group/other-accessible one by the mode check. If this test starts
+        # failing, update LIMITATIONS.md A16.
+        substitute = self.tmp / "substitute"
+        substitute.mkdir(mode=0o700)
         identity = (substitute.stat().st_dev, substitute.stat().st_ino)
         out = self.tmp / "out"
         with self.swap_after_mkdir(lambda path: os.rename(substitute, path)):

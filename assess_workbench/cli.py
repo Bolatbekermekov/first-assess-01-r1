@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import stat
 import sys
 from collections.abc import Mapping, Sequence
 from typing import Final
@@ -28,6 +29,9 @@ _NEW_FILE_FLAGS: Final = (
 )
 # Writing relative to a directory descriptor needs open(dir_fd=...) and listdir(fd); POSIX systems have both.
 _DIRECTORY_FD_SUPPORTED: Final = os.open in os.supports_dir_fd and os.listdir in os.supports_fd
+# out-dir is created owner-only: the reports hold contact data, and the mode also marks the directory this process
+# made. A substitute left accessible to group/other (the mode a careless same-user swap keeps) is then refused.
+_NEW_DIRECTORY_MODE: Final = 0o700
 
 
 class _ForeignDirectoryError(OSError):
@@ -47,7 +51,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     except WorkbenchError as error:
         return _fail(error.code)
     try:
-        os.mkdir(arguments.out_dir)
+        os.mkdir(arguments.out_dir, _NEW_DIRECTORY_MODE)
     except FileExistsError:  # any existing path, including a (dangling) symlink, or a lost race
         return _fail(OUTPUT_EXISTS)
     except OSError:
@@ -97,9 +101,12 @@ def _write_new_files(directory: str, documents: Mapping[str, bytes]) -> None:
 
     mkdir() returns no handle, so the directory is opened again by its path, and a process allowed to rename entries
     in the parent can put another directory there first. O_NOFOLLOW and O_DIRECTORY refuse only a symlink or a
-    non-directory, and nothing tells an empty directory apart from the new one (LIMITATIONS.md, A16). What can be
-    checked is checked: a directory that already has entries receives nothing, and success also requires that
-    `directory` still names the directory that received the files.
+    non-directory. The opened directory is therefore vetted before anything is written (see _is_own_empty_directory):
+    it must be owned by this user, closed to group/other and empty. That rejects a cross-user swap outright — another
+    user cannot create a directory owned by this euid — and a same-user swap that kept a group/other-accessible mode.
+    What still cannot be told apart is an empty, owner-only directory the same user (or root) substituted for the one
+    mkdir() made (LIMITATIONS.md, A16). Success also requires that `directory` still names the directory that
+    received the files.
     """
     if not _DIRECTORY_FD_SUPPORTED:  # e.g. Windows: fall back to exclusive creation by full path
         for name, content in documents.items():
@@ -110,7 +117,7 @@ def _write_new_files(directory: str, documents: Mapping[str, bytes]) -> None:
     path = directory.rstrip("/")
     dir_fd = os.open(path, _DIRECTORY_FLAGS)
     try:
-        if os.listdir(dir_fd):
+        if not _is_own_empty_directory(dir_fd):
             raise _ForeignDirectoryError
         for name, content in documents.items():
             _write_new_file(name, content, dir_fd=dir_fd)
@@ -118,6 +125,20 @@ def _write_new_files(directory: str, documents: Mapping[str, bytes]) -> None:
             raise _ForeignDirectoryError
     finally:
         os.close(dir_fd)
+
+
+def _is_own_empty_directory(dir_fd: int) -> bool:
+    """Whether the open directory looks like the one mkdir() just made: owned by us, owner-only and empty.
+
+    A different user cannot create a directory owned by this euid, so the owner check refuses every cross-user swap.
+    The group/other-mode check refuses a same-user swap that kept the umask-default mode instead of the 0o700 this
+    process creates. An empty, owner-only directory owned by this user is indistinguishable from our own and passes;
+    only the same user or root can produce one. This needs the filesystem to assign a new directory to the creating
+    euid, which ordinary local and tmpfs mounts do but some ownership-remapping network mounts (NFS root/all_squash,
+    some sshfs/SMB) do not — see LIMITATIONS.md section 2 and docs/R3_REWORK.md.
+    """
+    status = os.fstat(dir_fd)
+    return status.st_uid == os.geteuid() and not stat.S_IMODE(status.st_mode) & 0o077 and not os.listdir(dir_fd)
 
 
 def _write_new_file(path: str, content: bytes, *, dir_fd: int | None) -> None:
