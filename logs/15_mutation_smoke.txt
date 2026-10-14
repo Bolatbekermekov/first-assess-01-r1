@@ -1,5 +1,5 @@
 $ python dev/mutation_smoke.py
-# started_utc: 2026-10-14T12:24:21+00:00
+# started_utc: 2026-10-14T18:07:46+00:00
 # cwd: /work
 # python: 3.12.13 (CPython)
 # platform: Linux-6.12.76-linuxkit-aarch64-with-glibc2.41
@@ -22,12 +22,13 @@ KILLED    loading.py      integer chunks longer than the digit-limit exemption  
 KILLED    loading.py      JSON parsed by the recursive pure-Python scanner (depth follows sys.setrecursionlimit)  (tests: loading)
 KILLED    html_report.py  quotes left unescaped in HTML  (tests: html)
 KILLED    cli.py          output directory created with makedirs(exist_ok=True)  (tests: cli)
-KILLED    cli.py          out-dir created accessible to group/other (R3)  (tests: cli)
+KILLED    cli.py          out-dir created accessible to group/other  (tests: cli)
 KILLED    cli.py          whole input read without the size cap  (tests: cli)
+KILLED    cli.py          reports written without checking the parent is trusted (R4)  (tests: cli)
+KILLED    cli.py          untrusted-writable parent treated as trusted (R4)  (tests: cli)
 KILLED    cli.py          populated directory swapped in after mkdir accepted  (tests: cli)
-KILLED    cli.py          cross-user swap into a foreign-owned directory accepted (R3)  (tests: cli)
-KILLED    cli.py          swap keeping a group/other-accessible mode accepted (R3)  (tests: cli)
+KILLED    cli.py          swap keeping a group/other-accessible mode accepted  (tests: cli)
 KILLED    cli.py          success reported without re-checking what out-dir names  (tests: cli)
-KILLED    cli.py          trailing slash kept, so O_NOFOLLOW does not apply  (tests: cli)
-24/24 injected defects detected
+KILLED    cli.py          trailing slash dropped before splitting the parent path  (tests: cli)
+25/25 injected defects detected
 ## stderr

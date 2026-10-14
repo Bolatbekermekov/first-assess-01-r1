@@ -3,22 +3,24 @@ import hashlib, json, pathlib
 manifest = json.loads(pathlib.Path("RETURN_MANIFEST.json").read_text(encoding="utf-8"))
 code = [entry for entry in manifest["files"] if entry["path"].startswith("assess_workbench/")]
 same = sum(hashlib.sha256(pathlib.Path(entry["path"]).read_bytes()).hexdigest() == entry["sha256"] for entry in code)
-print(f"code under test is the R2 return: {same}/{len(code)} assess_workbench files match its RETURN_MANIFEST.json")
-'"'"' && exec python -m unittest discover -s tests -p "test_candidate_*.py" -k IntegerDigitLimitTests -k EnvironmentTests -k DirectorySwapTests -k test_out_dir_with_trailing_slashes -v'
-# started_utc: 2026-10-14T12:25:09+00:00
+print(f"code under test is the R3 return: {same}/{len(code)} assess_workbench files match its RETURN_MANIFEST.json")
+'"'"' && exec python -m unittest discover -s tests -p "test_candidate_*.py" -k IntegerDigitLimitTests -k EnvironmentTests -k ParentTrustTests -k DirectorySwapTests -k test_out_dir_with_trailing_slashes -v'
+# started_utc: 2026-10-14T18:08:36+00:00
 # cwd: /work
 # python: 3.12.13 (CPython)
 # platform: Linux-6.12.76-linuxkit-aarch64-with-glibc2.41
 # exit_code: 1
 ## stdout
-code under test is the R2 return: 11/11 assess_workbench files match its RETURN_MANIFEST.json
+code under test is the R3 return: 11/11 assess_workbench files match its RETURN_MANIFEST.json
 ## stderr
-test_directory_owned_by_another_user_swapped_in_is_refused (test_candidate_cli.DirectorySwapTests.test_directory_owned_by_another_user_swapped_in_is_refused) ... FAIL
 test_directory_replaced_after_it_was_opened_is_not_reported_as_created (test_candidate_cli.DirectorySwapTests.test_directory_replaced_after_it_was_opened_is_not_reported_as_created) ... ok
-test_group_or_world_accessible_directory_swapped_in_is_refused (test_candidate_cli.DirectorySwapTests.test_group_or_world_accessible_directory_swapped_in_is_refused) ... FAIL
-test_identical_owner_only_directory_swapped_in_cannot_be_detected (test_candidate_cli.DirectorySwapTests.test_identical_owner_only_directory_swapped_in_cannot_be_detected) ... ok
+test_group_or_world_accessible_directory_swapped_in_is_refused (test_candidate_cli.DirectorySwapTests.test_group_or_world_accessible_directory_swapped_in_is_refused) ... ok
 test_populated_directory_swapped_in_after_mkdir_receives_nothing (test_candidate_cli.DirectorySwapTests.test_populated_directory_swapped_in_after_mkdir_receives_nothing) ... ok
+test_same_user_swap_in_a_trusted_parent_is_the_only_residual (test_candidate_cli.DirectorySwapTests.test_same_user_swap_in_a_trusted_parent_is_the_only_residual) ... ok
 test_symlink_swapped_in_after_mkdir_is_not_followed (test_candidate_cli.DirectorySwapTests.test_symlink_swapped_in_after_mkdir_is_not_followed) ... ok
+test_owner_only_parent_is_trusted (test_candidate_cli.ParentTrustTests.test_owner_only_parent_is_trusted) ... ok
+test_sticky_world_writable_parent_is_trusted (test_candidate_cli.ParentTrustTests.test_sticky_world_writable_parent_is_trusted) ... ok
+test_untrusted_writable_parent_fails_before_writing (test_candidate_cli.ParentTrustTests.test_untrusted_writable_parent_fails_before_writing) ... FAIL
 test_out_dir_with_trailing_slashes (test_candidate_cli.SuccessTests.test_out_dir_with_trailing_slashes) ... ok
 test_interpreter_settings_and_locale_do_not_change_the_result (test_candidate_environment.EnvironmentTests.test_interpreter_settings_and_locale_do_not_change_the_result) ... ok
 test_long_integer_field_value_reaches_its_field_rule (test_candidate_loading.IntegerDigitLimitTests.test_long_integer_field_value_reaches_its_field_rule) ... ok
@@ -27,25 +29,10 @@ test_review_reproduction_is_a_rejected_row_under_every_limit (test_candidate_loa
 test_the_process_wide_setting_is_never_changed (test_candidate_loading.IntegerDigitLimitTests.test_the_process_wide_setting_is_never_changed) ... ok
 
 ======================================================================
-FAIL: test_directory_owned_by_another_user_swapped_in_is_refused (test_candidate_cli.DirectorySwapTests.test_directory_owned_by_another_user_swapped_in_is_refused)
+FAIL: test_untrusted_writable_parent_fails_before_writing (test_candidate_cli.ParentTrustTests.test_untrusted_writable_parent_fails_before_writing)
 ----------------------------------------------------------------------
 Traceback (most recent call last):
-  File "/work/out/prev/tests/test_candidate_cli.py", line 359, in test_directory_owned_by_another_user_swapped_in_is_refused
-    self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
-AssertionError: Tuples differ: (0, 'REPORT_CREATED\n', '') != (2, '', 'ERROR IO_ERROR\n')
-
-First differing element 0:
-0
-2
-
-- (0, 'REPORT_CREATED\n', '')
-+ (2, '', 'ERROR IO_ERROR\n')
-
-======================================================================
-FAIL: test_group_or_world_accessible_directory_swapped_in_is_refused (test_candidate_cli.DirectorySwapTests.test_group_or_world_accessible_directory_swapped_in_is_refused)
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/work/out/prev/tests/test_candidate_cli.py", line 344, in test_group_or_world_accessible_directory_swapped_in_is_refused
+  File "/work/out/prev/tests/test_candidate_cli.py", line 400, in test_untrusted_writable_parent_fails_before_writing
     self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
 AssertionError: Tuples differ: (0, 'REPORT_CREATED\n', '') != (2, '', 'ERROR IO_ERROR\n')
 
@@ -57,6 +44,6 @@ First differing element 0:
 + (2, '', 'ERROR IO_ERROR\n')
 
 ----------------------------------------------------------------------
-Ran 12 tests in 1.248s
+Ran 14 tests in 1.245s
 
-FAILED (failures=2)
+FAILED (failures=1)

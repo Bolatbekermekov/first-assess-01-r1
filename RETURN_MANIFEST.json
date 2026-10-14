@@ -1,6 +1,6 @@
 {
   "task_id": "FIRST-ASSESS-01",
-  "revision": "R3",
+  "revision": "R4",
   "base_manifest_sha256": "1333a9500a0e7edf88ff62ae1ce0ac121a2f6579e5f5b488ef09e1519af5b1ca",
   "files": [
     {
@@ -25,11 +25,11 @@
     },
     {
       "path": "DECOMPOSITION_PROPOSAL.md",
-      "sha256": "a004e5f5cfa16f6424aa57bf605be4c196cfdf353cf5acafb587e404c9683c44"
+      "sha256": "53d35017d958093b10f51a7a44c890b74f5d84e95cfd5455591e28892364fe5e"
     },
     {
       "path": "LIMITATIONS.md",
-      "sha256": "95f67b0489ea2ac00bc0dbc060461d4ab0e20f74007ae20b47e0af80ced9e2f4"
+      "sha256": "86700e71002e8cf34cb08f950dee3da7c9a617b4a212a970d2b394fae4c71c38"
     },
     {
       "path": "RETURN_INSTRUCTIONS.md",
@@ -41,11 +41,11 @@
     },
     {
       "path": "TASK_REPORT.md",
-      "sha256": "21e1a2a7fe5e2884d8898b95873b143a15c318f56e67ad14bdd6cb8a7406acc1"
+      "sha256": "18a20dcb7b9d6bb4b52fe0124b79e36b9de30bc7055cb358cbba73c69e0d9b7a"
     },
     {
       "path": "TEST_MATRIX.md",
-      "sha256": "6ed35f686fdd4d2cba40667ad85f60de297fb40873e8ff30d829bee8a807e6ed"
+      "sha256": "44fab5b8895c4842ba3ce1a32d1b34ec15cd8b652d3b0feb51e29ea89574cf85"
     },
     {
       "path": "assess_workbench/__init__.py",
@@ -65,7 +65,7 @@
     },
     {
       "path": "assess_workbench/cli.py",
-      "sha256": "dae08936c936a2ba0117a6276fb20e8eaaffd739fbed59dc9959194a71a8a16b"
+      "sha256": "1ecb3989fc38fc6c970e289041eafcac5f3dac7677030395c64d953da098ada0"
     },
     {
       "path": "assess_workbench/contract.py",
@@ -97,7 +97,7 @@
     },
     {
       "path": "docs/CP1_DESIGN.md",
-      "sha256": "e5bf487a13aedec274e89f2cba10e837abb957fa3344b1eded3c0c481c005c66"
+      "sha256": "fef49158d1b4572a9446c98b02abd2feac53d999c48b0be69d9a9410414328c1"
     },
     {
       "path": "docs/R2_REWORK.md",
@@ -108,8 +108,12 @@
       "sha256": "ff3eacde516389efa67b7a02d82966b66153571e8791d3f2b4e3b90865d94a79"
     },
     {
+      "path": "docs/R4_REWORK.md",
+      "sha256": "79fe3454f57e5277200e96969b63fb541bb47c4e7e76a3315dbe2af8c5d71d2d"
+    },
+    {
       "path": "evidence/PUBLIC_STDERR.txt",
-      "sha256": "aafa4d246ab87e400b0e4e1d9f02b46f2f8714ba165ed7ac0b237037bee98342"
+      "sha256": "abcdcfcc8a7c1e1c02473c89ab3db6607cdd694e5fce982073dda663c5b48444"
     },
     {
       "path": "evidence/PUBLIC_STDOUT.txt",
@@ -157,95 +161,95 @@
     },
     {
       "path": "logs/00_host.txt",
-      "sha256": "6f3ede3d05e36dbfee4c1394ab72a77e881e81b8cfcf48e9f5df6a266743b370"
+      "sha256": "a7f8863ac9b189f3fedd4aeddfe5240b3f8d2299c2155f2a29b15b9776248a19"
     },
     {
       "path": "logs/01_container_environment.txt",
-      "sha256": "3ca69703f7e62401b8232e9c4181d63dd19f65c3b1e7005317954831d0896f78"
+      "sha256": "65221f8a24bba6330d53a393abcb15f54666b0132112950fc98897aee656a995"
     },
     {
       "path": "logs/02_check_package.txt",
-      "sha256": "e74201bb0485350dbe10580bf9ab880034173ba0d7b74547774f04a6399b1a07"
+      "sha256": "bb672fc34c20d191aca6f328e321a99090d0d6082950b9c821f7cd43a95e1747"
     },
     {
       "path": "logs/03_run_acceptance.txt",
-      "sha256": "b2cfd595d15b136c53c4e3272ea33afad0edbbdf9fe1891561b20fb7694d02e8"
+      "sha256": "0a40d6607a10379a27d2bfe2f3250f75c935cc0e3a62df287a6d392b107348fc"
     },
     {
       "path": "logs/04_candidate_tests.txt",
-      "sha256": "b6cfe7ac5200202eb40b37258231a29e0450a9d0ea6dd7b02a3f8e6f2453b7c1"
+      "sha256": "4493741efee9b285bef193eea7a4825abd038590f97b375dc9d99ffe6b0c5e42"
     },
     {
       "path": "logs/05_cli_json.txt",
-      "sha256": "9dabf97db95eea3849963c66e44d3dbd9c3174b6a4d2d6895db67ac61cf1b87b"
+      "sha256": "2416b3c8db78d9489488bec2607799d2e92cd794f130c6147abd16c12eeb2950"
     },
     {
       "path": "logs/06_cli_rerun_output_exists.txt",
-      "sha256": "20a62be65fe2d67b84c8839c7fe6a9ee8c7b89b9902d796b366867aad7b2c8e9"
+      "sha256": "f11da7cbea4b677b81d8cc07e164e223f1957884bc4592afd15b813fe36b812a"
     },
     {
       "path": "logs/07_cli_csv.txt",
-      "sha256": "aaa81511affe602c5a16a31dd17a26f4df8c94672578d06ed2cb203be911c278"
+      "sha256": "7ca52cd9c1e3822869cda6751f4ec8c467c899db726dd4f7c7d4ac3ee113fb5b"
     },
     {
       "path": "logs/08_cli_json_csv_identical.txt",
-      "sha256": "02ce96fe3e499edc3f873cca4ad5ab16e30a640d4d496c40081df08b1f25eb54"
+      "sha256": "325d78ee40af3f930335dff8370509b8bea29b4a68203963b2f213cc126f69e0"
     },
     {
       "path": "logs/09_cli_error_cases.txt",
-      "sha256": "724ba0c2955151855961fdee1dfc30664e5c3f08ce88f2cbcf3945488d52c986"
+      "sha256": "5a197bf6deb752566bac69d5760bcb4e22b67aff021e54803232475721d369e1"
     },
     {
       "path": "logs/10_ruff_check.txt",
-      "sha256": "f7dd16935424ab02064eb95cffa04d0b9b0d8868b06613980955eab4cff7eb85"
+      "sha256": "231662e9fb95f4f4434a4c12aa3fdc1fa8f8de87ef508547822b70930e8b595c"
     },
     {
       "path": "logs/11_ruff_format_check.txt",
-      "sha256": "878e2679451437acfd3b6fa866ed45ce3c72450e6066e9a35f7ccd8b0c943a69"
+      "sha256": "1e15375ae679d39db8044121303204b20e9226d24dd2c61caabf101b3c5d0e24"
     },
     {
       "path": "logs/12_mypy_strict.txt",
-      "sha256": "7dbad2f00a200bfe9660de8c429120e7411721ec3846439f47c133eb7d0ee235"
+      "sha256": "bdb8aa0bd51d385a6a97ef0bc08bdf08136b2047985a6b82e79558e778437c3f"
     },
     {
       "path": "logs/13_macos_candidate_tests.txt",
-      "sha256": "c9cea3f4e7aac247a482dbfd9458b8f56d2cfdb7dc878eff6758ef6e2f41b8a1"
+      "sha256": "34c01a1775c45c6d6763ad424b34fc9f91bf0d0d766f9d6e2c939233a56fc8f5"
     },
     {
       "path": "logs/14_macos_public_tests.txt",
-      "sha256": "c54cc539820fa69959a772d259ce4d99b1ca7e8878869d98c2600a37c6e60991"
+      "sha256": "5010cef422c8465d91f9fc8863a81e454fcf6c755b15fd14451dc3d9d6611477"
     },
     {
       "path": "logs/15_mutation_smoke.txt",
-      "sha256": "3012980397db7309bd33e8936d39c20db50e3e2b92a5e2a92cfa403ebceb3395"
+      "sha256": "d7bd0b65f62fbd80098ccf20579c359843dfb003ddbabde4e0872a2f83cfd240"
     },
     {
       "path": "logs/16_cli_candidate_example.txt",
-      "sha256": "859da3dbe12a7eb7eaf98a14e4aa0c9234011e0c78e03a4c1d649a22d8f0b0c6"
+      "sha256": "eeb383633a12a27580534a28f49b00c2dc32bac8a24f667becd75c00191ec71e"
     },
     {
-      "path": "logs/17_r3_regression_tests_on_r2_code.txt",
-      "sha256": "091335c112a94735b617a4cf501312a6e8d8d5c9d41fbe53eef68301197963f8"
+      "path": "logs/17_r4_regression_tests_on_r3_code.txt",
+      "sha256": "95d91436f9932a310e9007265865ac16b93c9e736259e6eb00a6acbe2ffac3aa"
     },
     {
-      "path": "logs/18_r3_regression_tests.txt",
-      "sha256": "80d7cf5a9bb53696296b6dbbcf6e037bc3a47cbdf497ba60145838713fd54042"
+      "path": "logs/18_r4_regression_tests.txt",
+      "sha256": "4db804d4440bb4ce20a3c7a67126b82bf04895118ec094edcd90550af7bf9a9b"
     },
     {
       "path": "logs/19_r2_review_reproduction_api.txt",
-      "sha256": "fdcd63aaa10c6f8aa06c377671f5dba5d5c16ec8fc07d4d2c5228531bc79f06b"
+      "sha256": "8686167119b961565a4c91300e078b87e07372692bfac133b5e82ee2c8cd1034"
     },
     {
       "path": "logs/20_r2_review_reproduction_cli.txt",
-      "sha256": "0c7932744b49d009bff8a7b5e70f81c19e668fb4cadeac9251e19b9841cb3587"
+      "sha256": "48b048f98262df8ee559c94a3ff49f7db20a7bb5949f07d25a1c044db27eac95"
     },
     {
       "path": "logs/21_r2_long_integer_cost.txt",
-      "sha256": "ee7991cb2734d9c43e2d265c89ebbd60aabf7b14d4a874e6b2724481d9baee26"
+      "sha256": "5f87e89ec52fbe0703dddb66e3e9b6b0dc65e3a479beb8c263e1adafa72c0e6d"
     },
     {
-      "path": "logs/22_r3_output_directory_is_owner_only.txt",
-      "sha256": "9aff1ab8865289f9bcd1c364d6c5811c5159b1537b5a604682639b66e160eb86"
+      "path": "logs/22_r4_output_directory_safety.txt",
+      "sha256": "db7fa6b5033b4f46a6f2d2890a70b5fc1843536ea5005bc3414bb6149b96a430"
     },
     {
       "path": "logs/candidate_example_report.html",
@@ -265,7 +269,7 @@
     },
     {
       "path": "tests/test_candidate_cli.py",
-      "sha256": "c6b0995213c4c01a18e92fcf613d99fb07e03d7981168d1501c1877bdeaf87c1"
+      "sha256": "7ba810de9c6415a6b2d844a4b639f4f0d53068977140c3af8ce0ca9f6cef4f58"
     },
     {
       "path": "tests/test_candidate_environment.py",

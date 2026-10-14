@@ -1,5 +1,5 @@
 $ python -m assess_workbench --input fixtures/leads.csv --format csv --client-id synthetic-client --campaign-id synthetic-campaign --out-dir sample_output_csv
-# started_utc: 2026-10-14T12:24:16+00:00
+# started_utc: 2026-10-14T18:07:41+00:00
 # cwd: /work
 # python: 3.12.13 (CPython)
 # platform: Linux-6.12.76-linuxkit-aarch64-with-glibc2.41

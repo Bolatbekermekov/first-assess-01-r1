@@ -1,5 +1,5 @@
 $ /Users/bolatbek/.local/share/uv/python/cpython-3.12-macos-aarch64-none/bin/python3.12 -B -m unittest discover -s tests -p 'test_candidate_*.py' -v
-# started_utc: 2026-10-14T12:24:19+00:00
+# started_utc: 2026-10-14T18:07:43+00:00
 # cwd: /Users/bolatbek/FIRST_ASSESS_01_R1
 # python: 3.12.13 (CPython)
 # platform: macOS-26.6.2-arm64-arm-64bit
@@ -8,11 +8,10 @@ $ /Users/bolatbek/.local/share/uv/python/cpython-3.12-macos-aarch64-none/bin/pyt
 ## stderr
 test_abbreviated_options_are_rejected (test_candidate_cli.ArgumentTests.test_abbreviated_options_are_rejected) ... ok
 test_missing_arguments_are_reported_by_argparse (test_candidate_cli.ArgumentTests.test_missing_arguments_are_reported_by_argparse) ... ok
-test_directory_owned_by_another_user_swapped_in_is_refused (test_candidate_cli.DirectorySwapTests.test_directory_owned_by_another_user_swapped_in_is_refused) ... ok
 test_directory_replaced_after_it_was_opened_is_not_reported_as_created (test_candidate_cli.DirectorySwapTests.test_directory_replaced_after_it_was_opened_is_not_reported_as_created) ... ok
 test_group_or_world_accessible_directory_swapped_in_is_refused (test_candidate_cli.DirectorySwapTests.test_group_or_world_accessible_directory_swapped_in_is_refused) ... ok
-test_identical_owner_only_directory_swapped_in_cannot_be_detected (test_candidate_cli.DirectorySwapTests.test_identical_owner_only_directory_swapped_in_cannot_be_detected) ... ok
 test_populated_directory_swapped_in_after_mkdir_receives_nothing (test_candidate_cli.DirectorySwapTests.test_populated_directory_swapped_in_after_mkdir_receives_nothing) ... ok
+test_same_user_swap_in_a_trusted_parent_is_the_only_residual (test_candidate_cli.DirectorySwapTests.test_same_user_swap_in_a_trusted_parent_is_the_only_residual) ... ok
 test_symlink_swapped_in_after_mkdir_is_not_followed (test_candidate_cli.DirectorySwapTests.test_symlink_swapped_in_after_mkdir_is_not_followed) ... ok
 test_keyboard_interrupt_is_not_swallowed (test_candidate_cli.InProcessTests.test_keyboard_interrupt_is_not_swallowed) ... ok
 test_losing_the_mkdir_race_is_output_exists (test_candidate_cli.InProcessTests.test_losing_the_mkdir_race_is_output_exists) ... ok
@@ -34,6 +33,9 @@ test_existing_directory_is_left_untouched (test_candidate_cli.OutputExistsTests.
 test_existing_file_is_left_untouched (test_candidate_cli.OutputExistsTests.test_existing_file_is_left_untouched) ... ok
 test_input_path_used_as_output_path (test_candidate_cli.OutputExistsTests.test_input_path_used_as_output_path) ... ok
 test_symlink_to_a_directory_is_not_followed (test_candidate_cli.OutputExistsTests.test_symlink_to_a_directory_is_not_followed) ... ok
+test_owner_only_parent_is_trusted (test_candidate_cli.ParentTrustTests.test_owner_only_parent_is_trusted) ... ok
+test_sticky_world_writable_parent_is_trusted (test_candidate_cli.ParentTrustTests.test_sticky_world_writable_parent_is_trusted) ... ok
+test_untrusted_writable_parent_fails_before_writing (test_candidate_cli.ParentTrustTests.test_untrusted_writable_parent_fails_before_writing) ... ok
 test_bom_crlf_quoted_header_spreadsheet_export (test_candidate_cli.SuccessTests.test_bom_crlf_quoted_header_spreadsheet_export) ... ok
 test_input_file_is_not_modified_and_nothing_else_is_created (test_candidate_cli.SuccessTests.test_input_file_is_not_modified_and_nothing_else_is_created) ... ok
 test_json_and_csv_produce_the_same_report_files (test_candidate_cli.SuccessTests.test_json_and_csv_produce_the_same_report_files) ... ok
@@ -160,6 +162,6 @@ test_scope_identifiers (test_candidate_report.ScopeAndRowListTests.test_scope_id
 test_scope_must_be_an_exact_dict_with_exactly_three_keys (test_candidate_report.ScopeAndRowListTests.test_scope_must_be_an_exact_dict_with_exactly_three_keys) ... ok
 
 ----------------------------------------------------------------------
-Ran 152 tests in 1.888s
+Ran 154 tests in 1.768s
 
 OK
