@@ -1,4 +1,4 @@
-# DECOMPOSITION_PROPOSAL — FIRST-ASSESS-01 R1
+# DECOMPOSITION_PROPOSAL — FIRST-ASSESS-01, возврат R2
 
 Это предложение кандидата. Оно не назначает работу, не присваивает production task ID и не подключает код к FIRST. Оценок трудозатрат и календарных обязательств здесь нет. Части повторяют границы модулей возврата, поэтому каждую можно принять отдельно по её собственным тестам.
 
@@ -24,10 +24,11 @@ G. Адаптер FIRST (опционально, отдельный контра
   - порядок ошибок и включительные пределы (10 485 760 байт, 10 000 рядов);
   - один BOM;
   - JSON: дубли ключей на любой глубине, `NaN`/`Infinity`, `RecursionError`;
+  - JSON (R2): целое любой длины загружается с точным значением. Результат не зависит от `sys.set_int_max_str_digits` и `sys.setrecursionlimit`, а настройки процесса не меняются;
   - CSV: заголовок, число ячеек, пустые записи, malformed и quoted cells;
   - `csv.field_size_limit` восстанавливается;
   - исключения без фрагментов входа и без `__context__`.
-- **Готовые тесты.** `tests/test_candidate_loading.py`; публичные `test_parser_errors_and_precedence`, `test_json_csv_equivalence_and_bom`; `test_json_and_csv_inputs_are_equivalent`.
+- **Готовые тесты.** `tests/test_candidate_loading.py` (в том числе `IntegerDigitLimitTests`); `tests/test_candidate_environment.py`; публичные `test_parser_errors_and_precedence`, `test_json_csv_equivalence_and_bom`; `test_json_and_csv_inputs_are_equivalent`.
 
 ## B. Валидация и нормализация полей
 
@@ -89,11 +90,16 @@ G. Адаптер FIRST (опционально, отдельный контра
 - **Зависимости.** Публичный API (части A, D, E).
 - **Критерии приёмки.**
   - порядок шагов, ошибка входа приоритетнее `OUTPUT_EXISTS`;
-  - `mkdir(exist_ok=False)`, symlink не разыменовывается, запись `O_EXCL | O_NOFOLLOW` через дескриптор каталога;
+  - `mkdir(exist_ok=False)`, symlink не разыменовывается, в том числе при `/` в конце пути;
+  - созданный каталог открывается по пути и должен быть пуст;
+  - запись `O_EXCL | O_NOFOLLOW` через дескриптор каталога;
+  - успех заявляется, только если после записи путь указывает на тот же каталог;
+  - граница A16 (подмену пустым каталогом обнаружить нельзя) и модель угроз — по решению владельца контракта, `docs/R2_REWORK.md`, раздел 2.5;
   - `IO_ERROR` и `OUTPUT_EXISTS`;
   - чтение ограничено `limit + 1` байтами;
-  - вход не изменяется, значения пользователя не выводятся, `KeyboardInterrupt` не перехватывается.
-- **Готовые тесты.** `tests/test_candidate_cli.py`; публичные `test_cli_json_csv_and_no_overwrite`, `test_cli_bad_input_creates_no_output_or_input_leak`.
+  - вход не изменяется, значения пользователя не выводятся, `KeyboardInterrupt` не перехватывается;
+  - результат не зависит от настроек интерпретатора и локали.
+- **Готовые тесты.** `tests/test_candidate_cli.py` (в том числе `DirectorySwapTests`); `tests/test_candidate_environment.py`; публичные `test_cli_json_csv_and_no_overwrite`, `test_cli_bad_input_creates_no_output_or_input_leak`.
 
 ## G. Возможный адаптер FIRST (только предложение)
 

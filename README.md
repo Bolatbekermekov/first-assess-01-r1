@@ -10,6 +10,7 @@
 | Отчёт о выполнении | [`TASK_REPORT.md`](TASK_REPORT.md) |
 | Требования → тесты → журналы | [`TEST_MATRIX.md`](TEST_MATRIX.md) |
 | Архитектура и решения по неоднозначностям контракта | [`docs/CP1_DESIGN.md`](docs/CP1_DESIGN.md) |
+| Доработка R1 → R2 по замечаниям проверки | [`docs/R2_REWORK.md`](docs/R2_REWORK.md) |
 | Ограничения | [`LIMITATIONS.md`](LIMITATIONS.md) |
 | Предложение декомпозиции | [`DECOMPOSITION_PROPOSAL.md`](DECOMPOSITION_PROPOSAL.md) |
 | Журналы запусков и готовые отчёты | [`logs/`](logs/) |
@@ -17,9 +18,9 @@
 ## Результаты
 
 - Публичная приёмка `RUN_ACCEPTANCE.py`: `PASS_PUBLIC_ONLY`, 12/12.
-- Собственные тесты: 141/141 в Linux-контейнере без сети и на macOS.
+- Собственные тесты: 150/150 в Linux-контейнере без сети и на macOS; регрессионные тесты R2 падают на коде R1 и проходят на R2.
 - `ruff check`, `ruff format --check` и `mypy --strict` — без замечаний.
-- Мутационная проверка: тесты обнаружили 15 из 15 внесённых дефектов.
+- Мутационная проверка: тесты обнаружили 21 из 21 внесённого дефекта.
 
 ## Запуск
 
@@ -45,4 +46,4 @@ docs/ logs/ evidence/  дизайн, журналы запусков, вывод
 dev/ compose.yaml Makefile  dev-окружение: песочница, сбор журналов, мутационная проверка, сборка ZIP возврата
 ```
 
-Возврат по `RETURN_INSTRUCTIONS.md` собирается командой `make zip` в `dist/FIRST_ASSESS_01_RETURN_R1.zip`; dev-окружение и этот README в него не входят.
+Возврат по `RETURN_INSTRUCTIONS.md` собирается командой `make zip` в `dist/FIRST_ASSESS_01_RETURN_R2.zip` (текущая ревизия возврата — R2); dev-окружение и этот README в него не входят.

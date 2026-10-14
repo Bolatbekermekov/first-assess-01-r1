@@ -1,12 +1,22 @@
-# TEST_MATRIX — FIRST-ASSESS-01 R1
+# TEST_MATRIX — FIRST-ASSESS-01, возврат R2
 
-Требование (пункт `CONTRACT.md` или критерий приёмки) → тест → фактический журнал → статус.
+Требование (пункт `CONTRACT.md` или критерий приёмки) → тест → фактический журнал → статус. Строки, добавленные или изменённые в R2, помечены **R2**; разбор замечаний — `docs/R2_REWORK.md`.
 
 **Обозначения тестов.** «Свой» — `tests/test_candidate_<модуль>.py`, записан как `<модуль>.<Класс>.<тест>`; `*` означает все тесты класса. «Публичный» — `tests/test_public_acceptance.py`.
 
-**Журналы.** Свои тесты — `logs/04_candidate_tests.txt` (Linux, 141/141 OK) и `logs/13_macos_candidate_tests.txt` (macOS, 141/141 OK). Публичные — `logs/03_run_acceptance.txt` и `evidence/` (Linux, 12/12, `PASS_PUBLIC_ONLY`), а также `logs/14_macos_public_tests.txt` (macOS, 12/12).
+**Журналы.**
+- Свои тесты: `logs/04_candidate_tests.txt` (Linux, 150/150 OK) и `logs/13_macos_candidate_tests.txt` (macOS, 150/150 OK).
+- Публичные: `logs/03_run_acceptance.txt` и `evidence/` (Linux, 12/12, `PASS_PUBLIC_ONLY`), `logs/14_macos_public_tests.txt` (macOS, 12/12).
+- Регрессионные проверки R2:
 
-Статус PASS означает, что тест прошёл в обоих прогонах, если не указано иное.
+  | Журнал | Содержание |
+  |---|---|
+  | 17 | новые тесты на коде R1: FAILED, 5 failures + 12 errors |
+  | 18 | те же тесты на R2: 10/10 OK |
+  | 19, 20 | воспроизведение замечания 1 через API и CLI |
+  | 21 | стоимость худшего случая |
+
+Статус PASS означает, что тест прошёл в обоих прогонах (Linux и macOS), если не указано иное.
 
 ## Общие требования и API
 
@@ -16,8 +26,9 @@
 | G2 | Импорт не вызывает CLI, чтение файлов и других побочных эффектов | свой `isolation.IsolationTests.test_import_has_no_side_effects` | 04, 13 | PASS |
 | G3 | `WorkbenchError`: `.code`, `str(e) == code`, без входных значений, в том числе через `__cause__` и `__context__` | свои `report.ScopeAndRowListTests.*`, `loading.ErrorHygieneTests.test_errors_do_not_carry_input`, `loading.*` (каждая ошибка проверяет `__context__ is None`); публичный `test_parser_errors_and_precedence` | 03, 04, 13 | PASS |
 | G4 | Входы не изменяются; выход не делит изменяемую память со входом | свои `report.IsolationTests.test_inputs_are_not_mutated`, `…test_output_shares_no_mutable_objects_with_input_or_between_rows`, `…test_mutating_a_report_affects_neither_input_nor_later_reports`; публичный `test_literal_golden_and_input_immutability` | 03, 04 | PASS |
-| G5 | Детерминизм: результат не зависит от времени, случайности, окружения и предыдущих запусков | свои `report.IsolationTests.test_result_is_deterministic`, `html.HtmlTests.test_rendering_is_deterministic_and_does_not_mutate_the_report`; совпадение отчётов JSON- и CSV-запусков | 04, 08 | PASS |
+| G5 | Детерминизм: результат не зависит от времени, случайности и предыдущих запусков | свои `report.IsolationTests.test_result_is_deterministic`, `html.HtmlTests.test_rendering_is_deterministic_and_does_not_mutate_the_report`; совпадение отчётов JSON- и CSV-запусков | 04, 08 | PASS |
 | G6 | Логика вычисляется, а не подменяется lookup-таблицей по fixtures | свои `isolation.IsolationTests.test_package_holds_no_fixture_answers`, `properties.RandomizedInvariantTests.test_random_batches_follow_the_contract` (150 случайных наборов против независимого оракула) | 04, 13 | PASS |
+| G7 | **R2.** Результат не зависит от окружения: CLI в отдельных процессах при `-X int_max_str_digits=640` и `=0`, `PYTHONINTMAXSTRDIGITS=4300`, `PYTHONHASHSEED=0` и `=4242`, `LC_ALL=C PYTHONUTF8=0` даёт тот же exit, stdout, stderr и побайтно те же отчёты; глубина JSON не зависит от `sys.setrecursionlimit`. Что остаётся зависимым — `LIMITATIONS.md`, раздел 2 | свои `environment.EnvironmentTests.test_interpreter_settings_and_locale_do_not_change_the_result`, `loading.JsonDocumentTests.test_nesting_limit_does_not_follow_sys_setrecursionlimit` | 04, 13, 17, 18, 20 | PASS |
 
 ## §1 Scope и `analyze_rows`
 
@@ -76,19 +87,20 @@
 | L1 | Порядок ошибок `INVALID_DATA` → `INVALID_FORMAT` → `INPUT_TOO_LARGE` → `INVALID_ENCODING` → `INVALID_DOCUMENT` → `TOO_MANY_ROWS` | свои `loading.ErrorPrecedenceTests.*`; публичный `test_parser_errors_and_precedence` | 03, 04 | PASS |
 | L2 | Лимит 10 485 760 байт включительно (BOM учитывается) | свои `loading.LimitTests.test_json_size_limit_is_inclusive`, `…test_bom_counts_towards_the_size_limit`, `…test_csv_size_limit_is_inclusive_and_huge_fields_load` | 04 | PASS |
 | L3 | Строгий UTF-8; допускается один BOM в начале (решение A5) | свои `loading.EncodingTests.*`; публичный `test_json_csv_equivalence_and_bom` | 03, 04 | PASS |
-| L4 | JSON: корень — массив; дубли ключей на любой вложенности (критерий приёмки); `NaN`/`Infinity`; хвост; `RecursionError`; пустой файл (A6, A7, A11) | свои `loading.JsonDocumentTests.*` | 04 | PASS |
+| L4 | JSON: корень — массив; дубли ключей на любой вложенности (критерий приёмки); `NaN`/`Infinity`; хвост; `RecursionError`; пустой файл (A7, A11) | свои `loading.JsonDocumentTests.*` | 04 | PASS |
 | L5 | CSV: заголовок ровно из шести полей в любом порядке, ровно 6 ячеек, пустые записи, malformed и quoted cells (критерий приёмки), конечный перевод строки, CR (A4), канонический порядок ключей (A12) | свои `loading.CsvDocumentTests.*` | 04 | PASS |
 | L6 | Лимит рядов проверяется после полного разбора | свои `loading.LimitTests.test_row_count_limit_is_inclusive`, `loading.ErrorPrecedenceTests.test_syntax_is_checked_before_row_count` | 04 | PASS |
 | L7 | `csv.field_size_limit` поднимается и восстанавливается, в том числе после ошибки | свои `loading.CsvFieldSizeLimitTests.*` | 04 | PASS |
 | L8 | Исключения не содержат фрагментов входа | свой `loading.ErrorHygieneTests.test_errors_do_not_carry_input` | 04 | PASS |
 | L9 | JSON и CSV эквивалентны | свой `properties.RandomizedInvariantTests.test_json_and_csv_inputs_are_equivalent`; публичный `test_json_csv_equivalence_and_bom` | 03, 04 | PASS |
+| L10 | **R2, замечание 1.** JSON number любой длины проходит `load_rows` с точным значением и отклоняется анализатором как ряд (`INVALID_ROW_SCHEMA`) или поле. Результат одинаков при `sys.set_int_max_str_digits` 4300, 640 и 0; настройка процесса не меняется даже временно (решение A6) | свои `loading.IntegerDigitLimitTests.test_review_reproduction_is_a_rejected_row_under_every_limit`, `…test_long_integers_keep_their_exact_value_at_any_depth`, `…test_long_integer_field_value_reaches_its_field_rule`, `…test_the_process_wide_setting_is_never_changed`; `environment.EnvironmentTests.*` | 04, 13, 17 (на R1 — ошибка), 18, 19, 20, 21 | PASS |
 
 ## §6 `render_html`
 
 | ID | Требование | Тесты | Журнал | Статус |
 |---|---|---|---|---|
 | H1 | Полный документ: doctype, html, head, meta charset, body | свой `html.HtmlTests.test_document_skeleton` | 04 | PASS |
-| H2 | Виден весь результат (scope, summary, все ряды и поля, коды, `duplicate_of_row`); поля не скрыты и не сокращены | свои `html.HtmlTests.test_every_row_and_value_is_shown_in_full`, `…test_scope_and_summary_are_visible`, `…test_internal_whitespace_is_kept_for_display`; визуальная проверка (`TASK_REPORT.md` §5) | 04 | PASS |
+| H2 | Виден весь результат (scope, summary, все ряды и поля, коды, `duplicate_of_row`); поля не скрыты и не сокращены | свои `html.HtmlTests.test_every_row_and_value_is_shown_in_full`, `…test_scope_and_summary_are_visible`, `…test_internal_whitespace_is_kept_for_display`; визуальная проверка R1 (`TASK_REPORT.md` §5) | 04 | PASS |
 | H3 | Для REJECTED показывается причина без исходного входа | свой `html.HtmlTests.test_rejected_rows_show_reasons_but_never_raw_input` | 04 | PASS |
 | H4 | Пустой набор показан явно | свой `html.HtmlTests.test_empty_report_is_explicit` | 04 | PASS |
 | H5 | Всё экранируется через `html.escape(str(v), quote=True)`, в том числе в переданном вручную отчёте (A15) | свои `html.HtmlTests.test_text_is_escaped_with_html_escape_quote_true`, `…test_values_from_a_crafted_report_are_escaped`; публичный `test_html_escapes_visible_data` | 03, 04 | PASS |
@@ -102,15 +114,18 @@
 | C1 | Все пять параметров обязательны; ошибки argparse дают exit 2; сокращения опций не принимаются | свои `cli.ArgumentTests.*` | 04 | PASS |
 | C2 | Успех: ровно `report.json` и `report.html`; формат JSON побайтно; stdout `REPORT_CREATED\n`; stderr пуст; exit 0 | свои `cli.SuccessTests.test_json_and_csv_produce_the_same_report_files`, `cli.InProcessTests.test_successful_run`; публичный `test_cli_json_csv_and_no_overwrite` | 03, 04, 05, 07, 08 | PASS |
 | C3 | Существующий out-dir любого вида → `OUTPUT_EXISTS`, ничего не меняется | свои `cli.OutputExistsTests.*` | 04, 06 | PASS |
-| C4 | symlink не разыменовывается: на каталог, висячий, подменённый после `mkdir` (критерий приёмки) | свои `cli.OutputExistsTests.test_symlink_to_a_directory_is_not_followed`, `…test_dangling_symlink_is_not_followed`, `cli.InProcessTests.test_directory_swapped_for_a_symlink_after_mkdir_is_not_followed` | 04, 13 | PASS |
+| C4 | symlink не разыменовывается (критерий приёмки): на каталог, висячий, поставленный на место каталога после `mkdir`; **R2:** в том числе при `/` и `//` в конце `--out-dir` | свои `cli.OutputExistsTests.test_symlink_to_a_directory_is_not_followed`, `…test_dangling_symlink_is_not_followed`, `cli.DirectorySwapTests.test_symlink_swapped_in_after_mkdir_is_not_followed` | 04, 13, 17 (на R1 `/` и `//` — FAIL), 18 | PASS |
 | C5 | Проблемы чтения и родителя → `IO_ERROR` (ошибки ФС — критерий приёмки) | свои `cli.IoErrorTests.*` | 04, 13 | PASS |
 | C6 | Ошибка входа приоритетнее существующего out-dir; при ошибке каталог не создаётся | свои `cli.InputErrorTests.*`; публичный `test_cli_bad_input_creates_no_output_or_input_leak` | 03, 04, 09 | PASS |
 | C7 | Чтение ограничено `limit + 1` байтами | свой `cli.IoErrorTests.test_endless_input_is_read_only_up_to_the_limit` (`/dev/zero`) | 04, 09 | PASS |
 | C8 | Сбой записи после `mkdir` → `IO_ERROR` без заявления успеха; гонка на `mkdir` → `OUTPUT_EXISTS` | свои `cli.InProcessTests.test_write_failure_after_mkdir_is_an_io_error`, `…test_losing_the_mkdir_race_is_output_exists` | 04 | PASS |
 | C9 | `KeyboardInterrupt` не превращается в успех | свой `cli.InProcessTests.test_keyboard_interrupt_is_not_swallowed` | 04 | PASS |
 | C10 | Вход не изменяется; пользовательские значения не выводятся (A9) | свои `cli.SuccessTests.test_input_file_is_not_modified_and_nothing_else_is_created`, `cli.InputErrorTests.test_invalid_scope_and_format_values_are_not_echoed` | 04 | PASS |
-| C11 | Пути с пробелами и Unicode; CSV, экспортированный табличным редактором (BOM, CRLF, заголовок в кавычках) | свои `cli.SuccessTests.test_unicode_and_spaces_in_paths`, `…test_bom_crlf_quoted_header_spreadsheet_export` | 04 | PASS |
+| C11 | Пути с пробелами и Unicode; CSV, экспортированный табличным редактором (BOM, CRLF, заголовок в кавычках); **R2:** `--out-dir` с `/` в конце | свои `cli.SuccessTests.test_unicode_and_spaces_in_paths`, `…test_bom_crlf_quoted_header_spreadsheet_export`, `…test_out_dir_with_trailing_slashes` | 04 | PASS |
 | C12 | Пустой `--out-dir` (A13) | свой `cli.IoErrorTests.test_empty_out_dir_argument` | 04 | PASS |
+| C13 | **R2, замечание 2.** Каталог с записями, поставленный на место созданного между `mkdir` и открытием, не получает отчётов: `IO_ERROR`, его содержимое не изменено (A16) | свой `cli.DirectorySwapTests.test_populated_directory_swapped_in_after_mkdir_receives_nothing` | 04, 13, 17 (на R1 — FAIL), 18 | PASS |
+| C14 | **R2, замечание 2.** Успех заявляется, только если после записи out-dir указывает на каталог с отчётами; каталог, переименованный после открытия, даёт `IO_ERROR`, а новый каталог по тому же пути остаётся пустым (A16) | свой `cli.DirectorySwapTests.test_directory_replaced_after_it_was_opened_is_not_reported_as_created` | 04, 13, 17 (на R1 — FAIL), 18 | PASS |
+| C15 | **R2, замечание 2. Известный предел, а не гарантия.** Пустой каталог, поставленный на место созданного между `mkdir` и открытием, неотличим: отчёты пишутся в него, `REPORT_CREATED`. Тест фиксирует, что при этом ничего не перезаписано и в out-dir ровно два отчёта (A16) | свой `cli.DirectorySwapTests.test_empty_directory_swapped_in_after_mkdir_cannot_be_detected` | 04, 13, 18 | PASS |
 
 ## §8 Независимость и возврат
 
@@ -120,17 +135,26 @@
 | I2 | Нет импортов вне stdlib и собственного пакета, нет пространств FIRST | свой `isolation.IsolationTests.test_package_imports_only_the_standard_library` | 04 | PASS |
 | P1 | Неизменяемые файлы пакета байт-в-байт | `CHECK_PACKAGE.py` | 02 | PASS |
 | P2 | Качество кода | `ruff check`, `ruff format --check`, `mypy --strict` | 10, 11, 12 | PASS |
-| P3 | Свои тесты действительно ловят дефекты | мутационная проверка: 15 внесённых дефектов в 6 модулях, обнаружены все | 15 | PASS |
+| P3 | Свои тесты действительно ловят дефекты | мутационная проверка: 21 внесённый дефект в 6 модулях, обнаружены все. Из них 6 добавлены в R2: возврат к `int()`, кусок длиннее 640 цифр, рекурсивный Python-сканер, удаление каждой из трёх проверок каталога | 15 | PASS |
 | P4 | Нагрузка 10 000 рядов без квадратичной деградации | свой `properties.RandomizedInvariantTests.test_maximum_row_count_is_processed_quickly` (граница 30 с) | 04, 13 | PASS |
+| P5 | **R2.** Регрессионные тесты замечаний 1 и 2 ловят дефекты R1: на коде R1 они падают, на R2 проходят. Код R1 сверен с его `RETURN_MANIFEST.json`, 11/11 файлов | 10 тестов: `IntegerDigitLimitTests`, `EnvironmentTests`, `DirectorySwapTests`, `test_out_dir_with_trailing_slashes` | 17 (FAILED: 5 failures, 12 errors), 18 (OK) | PASS |
 
 ## Не проверено
 
 | Условие | Статус | Комментарий |
 |---|---|---|
-| Windows | NOT_RUN | Запусков на Windows не было. В `cli.py` для платформ без `dir_fd` есть запасная ветка (`O_EXCL` по полному пути); ни один прогон её не исполнял |
-| Другие патч-версии CPython 3.12 и версии Unicode | NOT_RUN | Проверено только CPython 3.12.13 (`unicodedata` 15.0.0) |
-| Настоящая гонка ФС и подмена каталога другим процессом | NOT_RUN | Смоделировано в процессе через `unittest.mock`: подмена каталога на symlink после `mkdir`, `FileExistsError` от `mkdir`, `OSError` при записи. Реальный параллельный процесс не запускался |
+| Windows | NOT_RUN | Запусков на Windows не было. В `cli.py` для платформ без `dir_fd` есть запасная ветка (`O_EXCL` по полному пути, без проверок A16); ни один прогон её не исполнял |
+| Другие патч-версии CPython 3.12 и версии Unicode | NOT_RUN | Проверено только CPython 3.12.13 (`unicodedata` 15.0.0). Граница вложенности JSON (A7) зависит от сборки |
+| Настоящая гонка ФС: каталог подменяет другой процесс | NOT_RUN | Подмена моделируется внутри процесса через `unittest.mock` ровно в окне: symlink, непустой и пустой каталог после `mkdir`, переименование после открытия. Отдельно моделируются `FileExistsError` от `mkdir` и `OSError` при записи. Реальный параллельный процесс не запускался |
 | Настоящий сбой диска (ENOSPC, EIO) | NOT_RUN | Смоделирован через `OSError(28)` при создании второго файла |
 | Права доступа под root | NOT_RUN | Тесты прав пропускаются при uid 0. Оба прогона шли не от root, поэтому эти тесты выполнились |
 | Одновременное использование `csv.field_size_limit` чужим кодом в другом потоке | NOT_RUN | Параллельные вызовы самого `load_rows` упорядочены замком; влияние на чужой код в других потоках не проверялось (см. `LIMITATIONS.md`) |
-| Светлая тема и печать HTML | NOT_RUN | Визуально проверена только тёмная тема в Chrome на macOS; стили для светлой темы и печати проверены только как CSS |
+| Стоимость длинного целого на другом оборудовании | NOT_RUN | Худший случай (один литерал на 10 MiB) измерен только в Linux-контейнере на Apple M4 Pro: 12,4–12,6 с (журнал 21) |
+| Светлая тема и печать HTML | NOT_RUN | В R1 визуально проверена только тёмная тема в Chrome на macOS; стили для светлой темы и печати проверены только как CSS. Шаблон HTML в R2 не менялся, отчёты побайтно совпадают с R1 |
+
+## Не гарантируется
+
+| Свойство | Почему | Где описано |
+|---|---|---|
+| Отчёты попадают именно в каталог, созданный `mkdir`, если родитель доступен на запись другому процессу | `mkdir()` не возвращает дескриптор; пустой каталог, поставленный на место созданного до открытия, ничем не отличается. Поведение зафиксировано тестом C15 | `LIMITATIONS.md` A16; `docs/R2_REWORK.md` 2.4–2.5 (запрос уточнения контракта) |
+| Отказ от записи в каталог другого пользователя | Проверка владельца не добавлена: на NFS/sshfs/SMB без POSIX-владельцев она отвергала бы штатные запуски, а такого ограничения нет в контракте. Нужно решение владельца контракта | `docs/R2_REWORK.md` 2.5, пункт 2 |
