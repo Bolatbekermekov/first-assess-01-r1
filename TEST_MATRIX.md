@@ -1,20 +1,20 @@
-# TEST_MATRIX — FIRST-ASSESS-01, возврат R2
+# TEST_MATRIX — FIRST-ASSESS-01, возврат R3
 
-Требование (пункт `CONTRACT.md` или критерий приёмки) → тест → фактический журнал → статус. Строки, добавленные или изменённые в R2, помечены **R2**; разбор замечаний — `docs/R2_REWORK.md`.
+Требование (пункт `CONTRACT.md` или критерий приёмки) → тест → фактический журнал → статус. Строки, изменённые в R3, помечены **R3**; строки R2 сохраняют пометку **R2**. Разбор: `docs/R2_REWORK.md` (R1→R2), `docs/R3_REWORK.md` (R2→R3).
 
 **Обозначения тестов.** «Свой» — `tests/test_candidate_<модуль>.py`, записан как `<модуль>.<Класс>.<тест>`; `*` означает все тесты класса. «Публичный» — `tests/test_public_acceptance.py`.
 
 **Журналы.**
-- Свои тесты: `logs/04_candidate_tests.txt` (Linux, 150/150 OK) и `logs/13_macos_candidate_tests.txt` (macOS, 150/150 OK).
+- Свои тесты: `logs/04_candidate_tests.txt` (Linux, 152/152 OK) и `logs/13_macos_candidate_tests.txt` (macOS, 152/152 OK).
 - Публичные: `logs/03_run_acceptance.txt` и `evidence/` (Linux, 12/12, `PASS_PUBLIC_ONLY`), `logs/14_macos_public_tests.txt` (macOS, 12/12).
-- Регрессионные проверки R2:
+- Регрессионные проверки R3:
 
   | Журнал | Содержание |
   |---|---|
-  | 17 | новые тесты на коде R1: FAILED, 5 failures + 12 errors |
-  | 18 | те же тесты на R2: 10/10 OK |
-  | 19, 20 | воспроизведение замечания 1 через API и CLI |
-  | 21 | стоимость худшего случая |
+  | 17 | тесты владельца и режима каталога на коде возврата R2 (`git archive` `9a76d1a`, 11/11 файлов): FAILED, 2 failures |
+  | 18 | те же 12 тестов на R3: 12/12 OK |
+  | 22 | успешный запуск создаёт out-dir `0700`, принадлежащий текущему пользователю |
+  | 19, 20, 21 | воспроизведение и стоимость замечания 1 (принято в R2, остаётся зелёным) |
 
 Статус PASS означает, что тест прошёл в обоих прогонах (Linux и macOS), если не указано иное.
 
@@ -28,7 +28,7 @@
 | G4 | Входы не изменяются; выход не делит изменяемую память со входом | свои `report.IsolationTests.test_inputs_are_not_mutated`, `…test_output_shares_no_mutable_objects_with_input_or_between_rows`, `…test_mutating_a_report_affects_neither_input_nor_later_reports`; публичный `test_literal_golden_and_input_immutability` | 03, 04 | PASS |
 | G5 | Детерминизм: результат не зависит от времени, случайности и предыдущих запусков | свои `report.IsolationTests.test_result_is_deterministic`, `html.HtmlTests.test_rendering_is_deterministic_and_does_not_mutate_the_report`; совпадение отчётов JSON- и CSV-запусков | 04, 08 | PASS |
 | G6 | Логика вычисляется, а не подменяется lookup-таблицей по fixtures | свои `isolation.IsolationTests.test_package_holds_no_fixture_answers`, `properties.RandomizedInvariantTests.test_random_batches_follow_the_contract` (150 случайных наборов против независимого оракула) | 04, 13 | PASS |
-| G7 | **R2.** Результат не зависит от окружения: CLI в отдельных процессах при `-X int_max_str_digits=640` и `=0`, `PYTHONINTMAXSTRDIGITS=4300`, `PYTHONHASHSEED=0` и `=4242`, `LC_ALL=C PYTHONUTF8=0` даёт тот же exit, stdout, stderr и побайтно те же отчёты; глубина JSON не зависит от `sys.setrecursionlimit`. Что остаётся зависимым — `LIMITATIONS.md`, раздел 2 | свои `environment.EnvironmentTests.test_interpreter_settings_and_locale_do_not_change_the_result`, `loading.JsonDocumentTests.test_nesting_limit_does_not_follow_sys_setrecursionlimit` | 04, 13, 17, 18, 20 | PASS |
+| G7 | **R2.** Результат не зависит от окружения: CLI в отдельных процессах при `-X int_max_str_digits=640` и `=0`, `PYTHONINTMAXSTRDIGITS=4300`, `PYTHONHASHSEED=0` и `=4242`, `LC_ALL=C PYTHONUTF8=0` даёт тот же exit, stdout, stderr и побайтно те же отчёты; глубина JSON не зависит от `sys.setrecursionlimit`. Что остаётся зависимым — `LIMITATIONS.md`, раздел 2 | свои `environment.EnvironmentTests.test_interpreter_settings_and_locale_do_not_change_the_result`, `loading.JsonDocumentTests.test_nesting_limit_does_not_follow_sys_setrecursionlimit` | 04, 13, 18, 20 | PASS |
 
 ## §1 Scope и `analyze_rows`
 
@@ -93,7 +93,7 @@
 | L7 | `csv.field_size_limit` поднимается и восстанавливается, в том числе после ошибки | свои `loading.CsvFieldSizeLimitTests.*` | 04 | PASS |
 | L8 | Исключения не содержат фрагментов входа | свой `loading.ErrorHygieneTests.test_errors_do_not_carry_input` | 04 | PASS |
 | L9 | JSON и CSV эквивалентны | свой `properties.RandomizedInvariantTests.test_json_and_csv_inputs_are_equivalent`; публичный `test_json_csv_equivalence_and_bom` | 03, 04 | PASS |
-| L10 | **R2, замечание 1.** JSON number любой длины проходит `load_rows` с точным значением и отклоняется анализатором как ряд (`INVALID_ROW_SCHEMA`) или поле. Результат одинаков при `sys.set_int_max_str_digits` 4300, 640 и 0; настройка процесса не меняется даже временно (решение A6) | свои `loading.IntegerDigitLimitTests.test_review_reproduction_is_a_rejected_row_under_every_limit`, `…test_long_integers_keep_their_exact_value_at_any_depth`, `…test_long_integer_field_value_reaches_its_field_rule`, `…test_the_process_wide_setting_is_never_changed`; `environment.EnvironmentTests.*` | 04, 13, 17 (на R1 — ошибка), 18, 19, 20, 21 | PASS |
+| L10 | **R2, замечание 1 (принято).** JSON number любой длины проходит `load_rows` с точным значением и отклоняется анализатором как ряд (`INVALID_ROW_SCHEMA`) или поле. Результат одинаков при `sys.set_int_max_str_digits` 4300, 640 и 0; настройка процесса не меняется даже временно (решение A6) | свои `loading.IntegerDigitLimitTests.test_review_reproduction_is_a_rejected_row_under_every_limit`, `…test_long_integers_keep_their_exact_value_at_any_depth`, `…test_long_integer_field_value_reaches_its_field_rule`, `…test_the_process_wide_setting_is_never_changed`; `environment.EnvironmentTests.*` | 04, 13, 18, 19, 20, 21 | PASS |
 
 ## §6 `render_html`
 
@@ -114,7 +114,7 @@
 | C1 | Все пять параметров обязательны; ошибки argparse дают exit 2; сокращения опций не принимаются | свои `cli.ArgumentTests.*` | 04 | PASS |
 | C2 | Успех: ровно `report.json` и `report.html`; формат JSON побайтно; stdout `REPORT_CREATED\n`; stderr пуст; exit 0 | свои `cli.SuccessTests.test_json_and_csv_produce_the_same_report_files`, `cli.InProcessTests.test_successful_run`; публичный `test_cli_json_csv_and_no_overwrite` | 03, 04, 05, 07, 08 | PASS |
 | C3 | Существующий out-dir любого вида → `OUTPUT_EXISTS`, ничего не меняется | свои `cli.OutputExistsTests.*` | 04, 06 | PASS |
-| C4 | symlink не разыменовывается (критерий приёмки): на каталог, висячий, поставленный на место каталога после `mkdir`; **R2:** в том числе при `/` и `//` в конце `--out-dir` | свои `cli.OutputExistsTests.test_symlink_to_a_directory_is_not_followed`, `…test_dangling_symlink_is_not_followed`, `cli.DirectorySwapTests.test_symlink_swapped_in_after_mkdir_is_not_followed` | 04, 13, 17 (на R1 `/` и `//` — FAIL), 18 | PASS |
+| C4 | symlink не разыменовывается (критерий приёмки): на каталог, висячий, поставленный на место каталога после `mkdir`; **R2:** в том числе при `/` и `//` в конце `--out-dir` (ядро иначе разыменовывает последний symlink); цель symlink `0o700` того же владельца, чтобы проверку режима не заслонила проверка режима | свои `cli.OutputExistsTests.test_symlink_to_a_directory_is_not_followed`, `…test_dangling_symlink_is_not_followed`, `cli.DirectorySwapTests.test_symlink_swapped_in_after_mkdir_is_not_followed` | 04, 13, 18 | PASS |
 | C5 | Проблемы чтения и родителя → `IO_ERROR` (ошибки ФС — критерий приёмки) | свои `cli.IoErrorTests.*` | 04, 13 | PASS |
 | C6 | Ошибка входа приоритетнее существующего out-dir; при ошибке каталог не создаётся | свои `cli.InputErrorTests.*`; публичный `test_cli_bad_input_creates_no_output_or_input_leak` | 03, 04, 09 | PASS |
 | C7 | Чтение ограничено `limit + 1` байтами | свой `cli.IoErrorTests.test_endless_input_is_read_only_up_to_the_limit` (`/dev/zero`) | 04, 09 | PASS |
@@ -123,9 +123,12 @@
 | C10 | Вход не изменяется; пользовательские значения не выводятся (A9) | свои `cli.SuccessTests.test_input_file_is_not_modified_and_nothing_else_is_created`, `cli.InputErrorTests.test_invalid_scope_and_format_values_are_not_echoed` | 04 | PASS |
 | C11 | Пути с пробелами и Unicode; CSV, экспортированный табличным редактором (BOM, CRLF, заголовок в кавычках); **R2:** `--out-dir` с `/` в конце | свои `cli.SuccessTests.test_unicode_and_spaces_in_paths`, `…test_bom_crlf_quoted_header_spreadsheet_export`, `…test_out_dir_with_trailing_slashes` | 04 | PASS |
 | C12 | Пустой `--out-dir` (A13) | свой `cli.IoErrorTests.test_empty_out_dir_argument` | 04 | PASS |
-| C13 | **R2, замечание 2.** Каталог с записями, поставленный на место созданного между `mkdir` и открытием, не получает отчётов: `IO_ERROR`, его содержимое не изменено (A16) | свой `cli.DirectorySwapTests.test_populated_directory_swapped_in_after_mkdir_receives_nothing` | 04, 13, 17 (на R1 — FAIL), 18 | PASS |
-| C14 | **R2, замечание 2.** Успех заявляется, только если после записи out-dir указывает на каталог с отчётами; каталог, переименованный после открытия, даёт `IO_ERROR`, а новый каталог по тому же пути остаётся пустым (A16) | свой `cli.DirectorySwapTests.test_directory_replaced_after_it_was_opened_is_not_reported_as_created` | 04, 13, 17 (на R1 — FAIL), 18 | PASS |
-| C15 | **R2, замечание 2. Известный предел, а не гарантия.** Пустой каталог, поставленный на место созданного между `mkdir` и открытием, неотличим: отчёты пишутся в него, `REPORT_CREATED`. Тест фиксирует, что при этом ничего не перезаписано и в out-dir ровно два отчёта (A16) | свой `cli.DirectorySwapTests.test_empty_directory_swapped_in_after_mkdir_cannot_be_detected` | 04, 13, 18 | PASS |
+| C13 | **R2, замечание 2.** Каталог с записями, поставленный на место созданного между `mkdir` и открытием, не получает отчётов: `IO_ERROR`, его содержимое не изменено (A16) | свой `cli.DirectorySwapTests.test_populated_directory_swapped_in_after_mkdir_receives_nothing` | 04, 13, 18 | PASS |
+| C14 | **R2, замечание 2.** Успех заявляется, только если после записи out-dir указывает на каталог с отчётами; каталог, переименованный после открытия, даёт `IO_ERROR`, а новый каталог по тому же пути остаётся пустым (A16) | свой `cli.DirectorySwapTests.test_directory_replaced_after_it_was_opened_is_not_reported_as_created` | 04, 13, 18 | PASS |
+| C15 | **R3, замечание 2. Сужённый известный предел, а не гарантия.** Пустой каталог `0o700` того же владельца, поставленный на место созданного, неотличим: отчёты пишутся в него, `REPORT_CREATED`. Тест фиксирует, что при этом ничего не перезаписано и в out-dir ровно два отчёта (A16) | свой `cli.DirectorySwapTests.test_identical_owner_only_directory_swapped_in_cannot_be_detected` | 04, 13, 18 | PASS |
+| C16 | **R3, замечание 2.** Каталог **другого владельца**, поставленный на место созданного между `mkdir` и открытием, не получает отчётов: `IO_ERROR`, out-dir пуст. Чужой пользователь не может создать каталог, принадлежащий нам, поэтому его подмена отвергается всегда (A16) | свой `cli.DirectorySwapTests.test_directory_owned_by_another_user_swapped_in_is_refused` | 04, 13, 17 (на R2 — FAIL), 18 | PASS |
+| C17 | **R3, замечание 2.** Каталог, открытый группе/прочим (типовой `mkdir` с umask по умолчанию), поставленный на место созданного, не получает отчётов: `IO_ERROR`, out-dir пуст (A16) | свой `cli.DirectorySwapTests.test_group_or_world_accessible_directory_swapped_in_is_refused` | 04, 13, 17 (на R2 — FAIL), 18 | PASS |
+| C18 | **R3.** Успешный запуск создаёт out-dir с режимом `0700`, принадлежащий текущему пользователю (отчёты содержат контактные данные; A14, A16) | свой `cli.DirectorySwapTests` (через `_is_own_empty_directory`), прямое наблюдение в журнале | 22 | PASS |
 
 ## §8 Независимость и возврат
 
@@ -135,9 +138,9 @@
 | I2 | Нет импортов вне stdlib и собственного пакета, нет пространств FIRST | свой `isolation.IsolationTests.test_package_imports_only_the_standard_library` | 04 | PASS |
 | P1 | Неизменяемые файлы пакета байт-в-байт | `CHECK_PACKAGE.py` | 02 | PASS |
 | P2 | Качество кода | `ruff check`, `ruff format --check`, `mypy --strict` | 10, 11, 12 | PASS |
-| P3 | Свои тесты действительно ловят дефекты | мутационная проверка: 21 внесённый дефект в 6 модулях, обнаружены все. Из них 6 добавлены в R2: возврат к `int()`, кусок длиннее 640 цифр, рекурсивный Python-сканер, удаление каждой из трёх проверок каталога | 15 | PASS |
+| P3 | Свои тесты действительно ловят дефекты | мутационная проверка: 24 внесённых дефекта в 6 модулях, обнаружены все (Linux-контейнер). Из них в R3 добавлены 3: удаление проверки владельца, удаление проверки режима, создание out-dir доступным группе/прочим; плюс обновлены мутации под новый код проверки каталога | 15 | PASS |
 | P4 | Нагрузка 10 000 рядов без квадратичной деградации | свой `properties.RandomizedInvariantTests.test_maximum_row_count_is_processed_quickly` (граница 30 с) | 04, 13 | PASS |
-| P5 | **R2.** Регрессионные тесты замечаний 1 и 2 ловят дефекты R1: на коде R1 они падают, на R2 проходят. Код R1 сверен с его `RETURN_MANIFEST.json`, 11/11 файлов | 10 тестов: `IntegerDigitLimitTests`, `EnvironmentTests`, `DirectorySwapTests`, `test_out_dir_with_trailing_slashes` | 17 (FAILED: 5 failures, 12 errors), 18 (OK) | PASS |
+| P5 | **R3.** Регрессионные тесты замечания 2 ловят дефект R2: новые тесты владельца и режима каталога на коде возврата R2 падают, на R3 проходят. Код R2 сверен с его `RETURN_MANIFEST.json`, 11/11 файлов | 12 тестов: `IntegerDigitLimitTests`, `EnvironmentTests`, `DirectorySwapTests`, `test_out_dir_with_trailing_slashes` | 17 (FAILED: 2 failures), 18 (OK) | PASS |
 
 ## Не проверено
 
@@ -145,7 +148,8 @@
 |---|---|---|
 | Windows | NOT_RUN | Запусков на Windows не было. В `cli.py` для платформ без `dir_fd` есть запасная ветка (`O_EXCL` по полному пути, без проверок A16); ни один прогон её не исполнял |
 | Другие патч-версии CPython 3.12 и версии Unicode | NOT_RUN | Проверено только CPython 3.12.13 (`unicodedata` 15.0.0). Граница вложенности JSON (A7) зависит от сборки |
-| Настоящая гонка ФС: каталог подменяет другой процесс | NOT_RUN | Подмена моделируется внутри процесса через `unittest.mock` ровно в окне: symlink, непустой и пустой каталог после `mkdir`, переименование после открытия. Отдельно моделируются `FileExistsError` от `mkdir` и `OSError` при записи. Реальный параллельный процесс не запускался |
+| Настоящая гонка ФС: каталог подменяет другой процесс | NOT_RUN | Подмена моделируется внутри процесса через `unittest.mock` ровно в окне: symlink, каталог другого владельца, каталог с доступом группе/прочим, непустой и пустой каталог `0o700` после `mkdir`, переименование после открытия. Отдельно моделируются `FileExistsError` от `mkdir` и `OSError` при записи. Реальный параллельный процесс не запускался |
+| Отображающие владельца ФС (NFS `all_squash`/`root_squash`, часть sshfs/SMB/vfat) | NOT_RUN | Проверка владельца (A16) предполагает, что ФС присваивает созданный каталог нашему `euid`. На таких монтированиях это не так, и штатный запуск вернёт `IO_ERROR`. Проверено, что владелец = `euid` на APFS (macOS), tmpfs и ext4 в контейнере, bind-mount `fakeowner` Docker (журнал 22); перечисленные сетевые ФС не проверялись. Цена — `docs/R3_REWORK.md`, 1.3 и 4 |
 | Настоящий сбой диска (ENOSPC, EIO) | NOT_RUN | Смоделирован через `OSError(28)` при создании второго файла |
 | Права доступа под root | NOT_RUN | Тесты прав пропускаются при uid 0. Оба прогона шли не от root, поэтому эти тесты выполнились |
 | Одновременное использование `csv.field_size_limit` чужим кодом в другом потоке | NOT_RUN | Параллельные вызовы самого `load_rows` упорядочены замком; влияние на чужой код в других потоках не проверялось (см. `LIMITATIONS.md`) |
@@ -156,5 +160,5 @@
 
 | Свойство | Почему | Где описано |
 |---|---|---|
-| Отчёты попадают именно в каталог, созданный `mkdir`, если родитель доступен на запись другому процессу | `mkdir()` не возвращает дескриптор; пустой каталог, поставленный на место созданного до открытия, ничем не отличается. Поведение зафиксировано тестом C15 | `LIMITATIONS.md` A16; `docs/R2_REWORK.md` 2.4–2.5 (запрос уточнения контракта) |
-| Отказ от записи в каталог другого пользователя | Проверка владельца не добавлена: на NFS/sshfs/SMB без POSIX-владельцев она отвергала бы штатные запуски, а такого ограничения нет в контракте. Нужно решение владельца контракта | `docs/R2_REWORK.md` 2.5, пункт 2 |
+| Отчёты попадают именно в каталог, созданный `mkdir`, если **тот же пользователь** (или root) подменил его пустым каталогом `0o700` | `mkdir()` не возвращает дескриптор; пустой каталог `0o700` того же владельца неотличим от созданного. Это вне модели угроз: такой процесс и так читает/меняет отчёты напрямую. Поведение зафиксировано тестом C15 | `LIMITATIONS.md` A16; `docs/R3_REWORK.md` 1.2, 2.1 |
+| Защита на отображающих владельца ФС (NFS squash и т. п.) | Проверка владельца (C16) там отвергнёт штатный запуск с `IO_ERROR` вместо записи; реализация выбирает безопасность по умолчанию. Смягчение (оставить только режим и пустоту) снова откроет подмену чужим пользователем и требует решения владельца контракта | `docs/R3_REWORK.md` 1.3 и 4 |
