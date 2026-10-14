@@ -7,12 +7,12 @@ SCOPE_ARGS=(--client-id synthetic-client --campaign-id synthetic-campaign)
 run() { docker compose run --rm -T py python dev/capture.py "$@" 2>/dev/null; }
 tools() { docker compose --profile tools run --rm -T tools python dev/capture.py "$@" 2>/dev/null; }
 MAC_PY="$HOME/.local/share/uv/python/cpython-3.12-macos-aarch64-none/bin/python3.12"
-# The R3 return as reviewed: its RETURN_MANIFEST.json is byte-identical to the one in FIRST_ASSESS_01_RETURN_R3.zip.
-# R4 fixes a gap that was present in it, so the new tests must fail on this code and pass on R4.
-PREV_COMMIT=f76bd3e29ad1a8dac3a3bdb3e3bb08caa2bce3f2
+# The R4 return as reviewed: its RETURN_MANIFEST.json is byte-identical to the one in FIRST_ASSESS_01_RETURN_R4.zip.
+# R5 fixes the create/pin order that was wrong in it, so the new tests must fail on this code and pass on R5.
+PREV_COMMIT=6ccf025c601359199107a3dc44ee503d9a1d9550
 
-# R4 regression tests: JSON integers vs sys.set_int_max_str_digits, the environment, out-dir substitution and the
-# trusted-parent requirement (ParentTrustTests), the swap window (DirectorySwapTests), trailing slashes.
+# R5 regression tests: JSON integers vs sys.set_int_max_str_digits, the environment, the trusted-parent requirement
+# and the pin-before-create order (ParentTrustTests, DirectorySwapTests), trailing slashes.
 read -r -d '' REGRESSION_TESTS <<'EOF' || true
 python -m unittest discover -s tests -p "test_candidate_*.py" -k IntegerDigitLimitTests -k EnvironmentTests -k ParentTrustTests -k DirectorySwapTests -k test_out_dir_with_trailing_slashes -v
 EOF
@@ -22,7 +22,7 @@ import hashlib, json, pathlib
 manifest = json.loads(pathlib.Path("RETURN_MANIFEST.json").read_text(encoding="utf-8"))
 code = [entry for entry in manifest["files"] if entry["path"].startswith("assess_workbench/")]
 same = sum(hashlib.sha256(pathlib.Path(entry["path"]).read_bytes()).hexdigest() == entry["sha256"] for entry in code)
-print(f"code under test is the R3 return: {same}/{len(code)} assess_workbench files match its RETURN_MANIFEST.json")
+print(f"code under test is the R4 return: {same}/{len(code)} assess_workbench files match its RETURN_MANIFEST.json")
 ' && exec $REGRESSION_TESTS
 EOF
 read -r -d '' OUTDIR_SAFETY <<'EOF' || true
@@ -31,11 +31,11 @@ rm -rf /tmp/trusted && mkdir -m 700 /tmp/trusted
 python -m assess_workbench --input fixtures/leads.json --format json --client-id synthetic-client --campaign-id synthetic-campaign --out-dir /tmp/trusted/own
 echo "trusted-parent exit=$?"
 python -c 'import os, stat; s = os.stat("/tmp/trusted/own"); print("out-dir mode=%04o owner_is_euid=%s entries=%s" % (stat.S_IMODE(s.st_mode), s.st_uid == os.geteuid(), sorted(os.listdir("/tmp/trusted/own"))))'
-# Untrusted (group/other-writable, no sticky) parent: the CLI refuses before writing any report.
+# Untrusted (group/other-writable, no sticky) parent: the CLI refuses before creating out-dir.
 rm -rf /tmp/shared && mkdir /tmp/shared && chmod 0777 /tmp/shared
 python -m assess_workbench --input fixtures/leads.json --format json --client-id synthetic-client --campaign-id synthetic-campaign --out-dir /tmp/shared/out
 echo "untrusted-parent exit=$?"
-python -c 'import os; p="/tmp/shared/out"; print("out-dir entries after refusal:", sorted(os.listdir(p)) if os.path.isdir(p) else "absent")'
+python -c 'import os; p="/tmp/shared/out"; print("out-dir after refusal:", sorted(os.listdir(p)) if os.path.isdir(p) else "absent (not created)")'
 EOF
 read -r -d '' REPRODUCTION_API <<'EOF' || true
 import sys
@@ -111,12 +111,12 @@ cp sample_output_example/report.html logs/candidate_example_report.html
 rm -rf sample_output_example
 rm -rf out/prev && mkdir -p out/prev && git archive "$PREV_COMMIT" | tar -x -C out/prev
 cp tests/test_candidate_*.py out/prev/tests/
-run logs/17_r4_regression_tests_on_r3_code.txt -- sh -c "$REGRESSION_ON_PREV_CODE"
+run logs/17_r5_regression_tests_on_r4_code.txt -- sh -c "$REGRESSION_ON_PREV_CODE"
 rm -rf out/prev
-run logs/18_r4_regression_tests.txt -- sh -c "$REGRESSION_TESTS"
+run logs/18_r5_regression_tests.txt -- sh -c "$REGRESSION_TESTS"
 run logs/19_r2_review_reproduction_api.txt -- python -c "$REPRODUCTION_API"
 run logs/20_r2_review_reproduction_cli.txt -- sh -c "$REPRODUCTION_CLI"
 run logs/21_r2_long_integer_cost.txt -- python -c "$LONG_INTEGER_COST"
-run logs/22_r4_output_directory_safety.txt -- sh -c "$OUTDIR_SAFETY"
+run logs/22_r5_output_directory_safety.txt -- sh -c "$OUTDIR_SAFETY"
 git status --short assess_workbench tests
 echo "evidence regenerated"

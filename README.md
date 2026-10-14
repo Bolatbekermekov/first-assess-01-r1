@@ -13,6 +13,7 @@
 | Доработка R1 → R2 по замечаниям проверки | [`docs/R2_REWORK.md`](docs/R2_REWORK.md) |
 | Доработка R2 → R3 (защита выходного каталога) | [`docs/R3_REWORK.md`](docs/R3_REWORK.md) |
 | Доработка R3 → R4 (доверенный родитель, запрос условия) | [`docs/R4_REWORK.md`](docs/R4_REWORK.md) |
+| Доработка R4 → R5 (порядок: закрепление родителя до создания) | [`docs/R5_REWORK.md`](docs/R5_REWORK.md) |
 | Ограничения | [`LIMITATIONS.md`](LIMITATIONS.md) |
 | Предложение декомпозиции | [`DECOMPOSITION_PROPOSAL.md`](DECOMPOSITION_PROPOSAL.md) |
 | Журналы запусков и готовые отчёты | [`logs/`](logs/) |
@@ -20,7 +21,7 @@
 ## Результаты
 
 - Публичная приёмка `RUN_ACCEPTANCE.py`: `PASS_PUBLIC_ONLY`, 12/12.
-- Собственные тесты: 154/154 в Linux-контейнере без сети и на macOS; регрессионные тесты R4 падают на коде R3 и проходят на R4.
+- Собственные тесты: 155/155 в Linux-контейнере без сети и на macOS; регрессионные тесты R5 падают на коде R4 и проходят на R5.
 - `ruff check`, `ruff format --check` и `mypy --strict` — без замечаний.
 - Мутационная проверка: тесты обнаружили 25 из 25 внесённых дефектов.
 
@@ -48,4 +49,4 @@ docs/ logs/ evidence/  дизайн, журналы запусков, вывод
 dev/ compose.yaml Makefile  dev-окружение: песочница, сбор журналов, мутационная проверка, сборка ZIP возврата
 ```
 
-Возврат по `RETURN_INSTRUCTIONS.md` собирается командой `make zip` в `dist/FIRST_ASSESS_01_RETURN_R4.zip` (текущая ревизия возврата — R4); dev-окружение и этот README в него не входят.
+Возврат по `RETURN_INSTRUCTIONS.md` собирается командой `make zip` в `dist/FIRST_ASSESS_01_RETURN_R5.zip` (текущая ревизия возврата — R5); dev-окружение и этот README в него не входят.
