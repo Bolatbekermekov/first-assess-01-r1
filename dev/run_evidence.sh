@@ -7,14 +7,14 @@ SCOPE_ARGS=(--client-id synthetic-client --campaign-id synthetic-campaign)
 run() { docker compose run --rm -T py python dev/capture.py "$@" 2>/dev/null; }
 tools() { docker compose --profile tools run --rm -T tools python dev/capture.py "$@" 2>/dev/null; }
 MAC_PY="$HOME/.local/share/uv/python/cpython-3.12-macos-aarch64-none/bin/python3.12"
-# The R2 return as reviewed: its RETURN_MANIFEST.json is byte-identical to the one in FIRST_ASSESS_01_RETURN_R2.zip.
-# R3 fixes a gap that was present in it, so the new tests must fail on this code and pass on R3.
-PREV_COMMIT=9a76d1a1ae7931dd1c6cb74209873f5f247e30a9
+# The R3 return as reviewed: its RETURN_MANIFEST.json is byte-identical to the one in FIRST_ASSESS_01_RETURN_R3.zip.
+# R4 fixes a gap that was present in it, so the new tests must fail on this code and pass on R4.
+PREV_COMMIT=f76bd3e29ad1a8dac3a3bdb3e3bb08caa2bce3f2
 
-# R3 regression tests: JSON integers vs sys.set_int_max_str_digits, the environment, out-dir substitution (the R3
-# owner/mode checks live in DirectorySwapTests and in the trailing-slash case).
+# R4 regression tests: JSON integers vs sys.set_int_max_str_digits, the environment, out-dir substitution and the
+# trusted-parent requirement (ParentTrustTests), the swap window (DirectorySwapTests), trailing slashes.
 read -r -d '' REGRESSION_TESTS <<'EOF' || true
-python -m unittest discover -s tests -p "test_candidate_*.py" -k IntegerDigitLimitTests -k EnvironmentTests -k DirectorySwapTests -k test_out_dir_with_trailing_slashes -v
+python -m unittest discover -s tests -p "test_candidate_*.py" -k IntegerDigitLimitTests -k EnvironmentTests -k ParentTrustTests -k DirectorySwapTests -k test_out_dir_with_trailing_slashes -v
 EOF
 read -r -d '' REGRESSION_ON_PREV_CODE <<EOF || true
 cd out/prev && python -c '
@@ -22,13 +22,20 @@ import hashlib, json, pathlib
 manifest = json.loads(pathlib.Path("RETURN_MANIFEST.json").read_text(encoding="utf-8"))
 code = [entry for entry in manifest["files"] if entry["path"].startswith("assess_workbench/")]
 same = sum(hashlib.sha256(pathlib.Path(entry["path"]).read_bytes()).hexdigest() == entry["sha256"] for entry in code)
-print(f"code under test is the R2 return: {same}/{len(code)} assess_workbench files match its RETURN_MANIFEST.json")
+print(f"code under test is the R3 return: {same}/{len(code)} assess_workbench files match its RETURN_MANIFEST.json")
 ' && exec $REGRESSION_TESTS
 EOF
-read -r -d '' OWNER_ONLY_OUTDIR <<'EOF' || true
-rm -rf /tmp/own && python -m assess_workbench --input fixtures/leads.json --format json --client-id synthetic-client --campaign-id synthetic-campaign --out-dir /tmp/own
-echo "exit=$?"
-python -c 'import os, stat; s = os.stat("/tmp/own"); print("out-dir mode=%04o owner_is_euid=%s entries=%s" % (stat.S_IMODE(s.st_mode), s.st_uid == os.geteuid(), sorted(os.listdir("/tmp/own"))))'
+read -r -d '' OUTDIR_SAFETY <<'EOF' || true
+# Success in a trusted (owner-only) parent: out-dir is created 0700 and owned by this user.
+rm -rf /tmp/trusted && mkdir -m 700 /tmp/trusted
+python -m assess_workbench --input fixtures/leads.json --format json --client-id synthetic-client --campaign-id synthetic-campaign --out-dir /tmp/trusted/own
+echo "trusted-parent exit=$?"
+python -c 'import os, stat; s = os.stat("/tmp/trusted/own"); print("out-dir mode=%04o owner_is_euid=%s entries=%s" % (stat.S_IMODE(s.st_mode), s.st_uid == os.geteuid(), sorted(os.listdir("/tmp/trusted/own"))))'
+# Untrusted (group/other-writable, no sticky) parent: the CLI refuses before writing any report.
+rm -rf /tmp/shared && mkdir /tmp/shared && chmod 0777 /tmp/shared
+python -m assess_workbench --input fixtures/leads.json --format json --client-id synthetic-client --campaign-id synthetic-campaign --out-dir /tmp/shared/out
+echo "untrusted-parent exit=$?"
+python -c 'import os; p="/tmp/shared/out"; print("out-dir entries after refusal:", sorted(os.listdir(p)) if os.path.isdir(p) else "absent")'
 EOF
 read -r -d '' REPRODUCTION_API <<'EOF' || true
 import sys
@@ -104,12 +111,12 @@ cp sample_output_example/report.html logs/candidate_example_report.html
 rm -rf sample_output_example
 rm -rf out/prev && mkdir -p out/prev && git archive "$PREV_COMMIT" | tar -x -C out/prev
 cp tests/test_candidate_*.py out/prev/tests/
-run logs/17_r3_regression_tests_on_r2_code.txt -- sh -c "$REGRESSION_ON_PREV_CODE"
+run logs/17_r4_regression_tests_on_r3_code.txt -- sh -c "$REGRESSION_ON_PREV_CODE"
 rm -rf out/prev
-run logs/18_r3_regression_tests.txt -- sh -c "$REGRESSION_TESTS"
+run logs/18_r4_regression_tests.txt -- sh -c "$REGRESSION_TESTS"
 run logs/19_r2_review_reproduction_api.txt -- python -c "$REPRODUCTION_API"
 run logs/20_r2_review_reproduction_cli.txt -- sh -c "$REPRODUCTION_CLI"
 run logs/21_r2_long_integer_cost.txt -- python -c "$LONG_INTEGER_COST"
-run logs/22_r3_output_directory_is_owner_only.txt -- sh -c "$OWNER_ONLY_OUTDIR"
+run logs/22_r4_output_directory_safety.txt -- sh -c "$OUTDIR_SAFETY"
 git status --short assess_workbench tests
 echo "evidence regenerated"

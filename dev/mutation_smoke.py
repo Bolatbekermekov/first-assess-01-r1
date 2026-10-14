@@ -51,21 +51,26 @@ MUTATIONS = [
      "return html.escape(str(value), quote=True)", "return html.escape(str(value), quote=False)", ["html"]),
     ("output directory created with makedirs(exist_ok=True)", "cli.py",
      "os.mkdir(arguments.out_dir, _NEW_DIRECTORY_MODE)", "os.makedirs(arguments.out_dir, exist_ok=True)", ["cli"]),
-    ("out-dir created accessible to group/other (R3)", "cli.py",
+    ("out-dir created accessible to group/other", "cli.py",
      "_NEW_DIRECTORY_MODE: Final = 0o700", "_NEW_DIRECTORY_MODE: Final = 0o777", ["cli"]),
     ("whole input read without the size cap", "cli.py",
      "return stream.read(MAX_INPUT_BYTES + 1)", "return stream.read()", ["cli"]),
+    ("reports written without checking the parent is trusted (R4)", "cli.py",
+     "        if not _parent_is_trusted(parent_fd):\n"
+     "            raise _ForeignDirectoryError  # an untrusted user could substitute out-dir: refuse before writing\n",
+     "", ["cli"]),
+    ("untrusted-writable parent treated as trusted (R4)", "cli.py",
+     "return bool(status.st_mode & stat.S_ISVTX) or not status.st_mode & 0o022", "return True", ["cli"]),
     ("populated directory swapped in after mkdir accepted", "cli.py",
      " and not os.listdir(dir_fd)", "", ["cli"]),
-    ("cross-user swap into a foreign-owned directory accepted (R3)", "cli.py",
-     "status.st_uid == os.geteuid() and ", "", ["cli"]),
-    ("swap keeping a group/other-accessible mode accepted (R3)", "cli.py",
+    ("swap keeping a group/other-accessible mode accepted", "cli.py",
      "not stat.S_IMODE(status.st_mode) & 0o077 and ", "", ["cli"]),
     ("success reported without re-checking what out-dir names", "cli.py",
-     "        if not os.path.samestat(os.fstat(dir_fd), os.lstat(path)):\n            raise _ForeignDirectoryError\n",
+     "            if not os.path.samestat(os.fstat(dir_fd), os.lstat(name, dir_fd=parent_fd)):\n"
+     "                raise _ForeignDirectoryError\n",
      "", ["cli"]),
-    ("trailing slash kept, so O_NOFOLLOW does not apply", "cli.py",
-     'path = directory.rstrip("/")', "path = directory", ["cli"]),
+    ("trailing slash dropped before splitting the parent path", "cli.py",
+     'os.path.split(directory.rstrip("/"))', "os.path.split(directory)", ["cli"]),
 ]
 
 

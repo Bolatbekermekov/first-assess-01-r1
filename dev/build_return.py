@@ -1,7 +1,7 @@
 """Dev-only: build RETURN_MANIFEST.json and the return ZIP from an explicit allowlist, and verify the ZIP.
 
 Usage (inside the container, from the project root):
-  python dev/build_return.py build    # RETURN_MANIFEST.json + dist/FIRST_ASSESS_01_RETURN_R3.zip
+  python dev/build_return.py build    # RETURN_MANIFEST.json + dist/FIRST_ASSESS_01_RETURN_R4.zip
   python dev/build_return.py verify   # extract to a temporary directory; re-check hashes, layout and all tests
 """
 
@@ -16,7 +16,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-REVISION = "R3"
+REVISION = "R4"
 ZIP_ROOT = f"FIRST_ASSESS_01_RETURN_{REVISION}"
 ZIP_PATH = ROOT / "dist" / f"{ZIP_ROOT}.zip"
 MANIFEST = "RETURN_MANIFEST.json"
