@@ -8,7 +8,7 @@ for limit in (4300, 640, 0):
     row = analyze_rows(rows, scope=scope)["rows"][0]
     print(f"set_int_max_str_digits({limit}): load_rows -> the exact 4301-digit int: {rows == [10**4301 - 1]};",
           f"analyze_rows -> {row['"'"'status'"'"']} {row['"'"'codes'"'"']}; setting afterwards: {sys.get_int_max_str_digits()}")'
-# started_utc: 2026-10-14T18:08:40+00:00
+# started_utc: 2026-10-14T19:48:28+00:00
 # cwd: /work
 # python: 3.12.13 (CPython)
 # platform: Linux-6.12.76-linuxkit-aarch64-with-glibc2.41

@@ -1,5 +1,5 @@
 $ sh -c 'python -m unittest discover -s tests -p "test_candidate_*.py" -k IntegerDigitLimitTests -k EnvironmentTests -k ParentTrustTests -k DirectorySwapTests -k test_out_dir_with_trailing_slashes -v'
-# started_utc: 2026-10-14T18:08:38+00:00
+# started_utc: 2026-10-14T19:48:26+00:00
 # cwd: /work
 # python: 3.12.13 (CPython)
 # platform: Linux-6.12.76-linuxkit-aarch64-with-glibc2.41
@@ -8,12 +8,13 @@ $ sh -c 'python -m unittest discover -s tests -p "test_candidate_*.py" -k Intege
 ## stderr
 test_directory_replaced_after_it_was_opened_is_not_reported_as_created (test_candidate_cli.DirectorySwapTests.test_directory_replaced_after_it_was_opened_is_not_reported_as_created) ... ok
 test_group_or_world_accessible_directory_swapped_in_is_refused (test_candidate_cli.DirectorySwapTests.test_group_or_world_accessible_directory_swapped_in_is_refused) ... ok
-test_populated_directory_swapped_in_after_mkdir_receives_nothing (test_candidate_cli.DirectorySwapTests.test_populated_directory_swapped_in_after_mkdir_receives_nothing) ... ok
-test_same_user_swap_in_a_trusted_parent_is_the_only_residual (test_candidate_cli.DirectorySwapTests.test_same_user_swap_in_a_trusted_parent_is_the_only_residual) ... ok
-test_symlink_swapped_in_after_mkdir_is_not_followed (test_candidate_cli.DirectorySwapTests.test_symlink_swapped_in_after_mkdir_is_not_followed) ... ok
+test_parent_renamed_and_substituted_after_pin_is_not_reported_as_created (test_candidate_cli.DirectorySwapTests.test_parent_renamed_and_substituted_after_pin_is_not_reported_as_created) ... ok
+test_populated_directory_swapped_in_receives_nothing (test_candidate_cli.DirectorySwapTests.test_populated_directory_swapped_in_receives_nothing) ... ok
+test_same_user_identical_substitute_in_trusted_parent_is_the_only_residual (test_candidate_cli.DirectorySwapTests.test_same_user_identical_substitute_in_trusted_parent_is_the_only_residual) ... ok
+test_symlink_swapped_in_as_out_dir_is_not_followed (test_candidate_cli.DirectorySwapTests.test_symlink_swapped_in_as_out_dir_is_not_followed) ... ok
 test_owner_only_parent_is_trusted (test_candidate_cli.ParentTrustTests.test_owner_only_parent_is_trusted) ... ok
 test_sticky_world_writable_parent_is_trusted (test_candidate_cli.ParentTrustTests.test_sticky_world_writable_parent_is_trusted) ... ok
-test_untrusted_writable_parent_fails_before_writing (test_candidate_cli.ParentTrustTests.test_untrusted_writable_parent_fails_before_writing) ... ok
+test_untrusted_writable_parent_fails_before_creating_out_dir (test_candidate_cli.ParentTrustTests.test_untrusted_writable_parent_fails_before_creating_out_dir) ... ok
 test_out_dir_with_trailing_slashes (test_candidate_cli.SuccessTests.test_out_dir_with_trailing_slashes) ... ok
 test_interpreter_settings_and_locale_do_not_change_the_result (test_candidate_environment.EnvironmentTests.test_interpreter_settings_and_locale_do_not_change_the_result) ... ok
 test_long_integer_field_value_reaches_its_field_rule (test_candidate_loading.IntegerDigitLimitTests.test_long_integer_field_value_reaches_its_field_rule) ... ok
@@ -22,6 +23,6 @@ test_review_reproduction_is_a_rejected_row_under_every_limit (test_candidate_loa
 test_the_process_wide_setting_is_never_changed (test_candidate_loading.IntegerDigitLimitTests.test_the_process_wide_setting_is_never_changed) ... ok
 
 ----------------------------------------------------------------------
-Ran 14 tests in 1.292s
+Ran 15 tests in 1.247s
 
 OK

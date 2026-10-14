@@ -1,6 +1,6 @@
 {
   "task_id": "FIRST-ASSESS-01",
-  "revision": "R4",
+  "revision": "R5",
   "base_manifest_sha256": "1333a9500a0e7edf88ff62ae1ce0ac121a2f6579e5f5b488ef09e1519af5b1ca",
   "files": [
     {
@@ -25,11 +25,11 @@
     },
     {
       "path": "DECOMPOSITION_PROPOSAL.md",
-      "sha256": "53d35017d958093b10f51a7a44c890b74f5d84e95cfd5455591e28892364fe5e"
+      "sha256": "896538456eddd6cb0d821b3018a97209df5052c96eb7ea53be104a17b0924cf9"
     },
     {
       "path": "LIMITATIONS.md",
-      "sha256": "86700e71002e8cf34cb08f950dee3da7c9a617b4a212a970d2b394fae4c71c38"
+      "sha256": "16d430b6966f0933932444793a244ca6ce66daa61c7e793aab69b394d2eb7e56"
     },
     {
       "path": "RETURN_INSTRUCTIONS.md",
@@ -41,11 +41,11 @@
     },
     {
       "path": "TASK_REPORT.md",
-      "sha256": "18a20dcb7b9d6bb4b52fe0124b79e36b9de30bc7055cb358cbba73c69e0d9b7a"
+      "sha256": "75dfe28c7ec19c6daaabdb594a39d32b58baf6c5d886003c4b77add024d2c162"
     },
     {
       "path": "TEST_MATRIX.md",
-      "sha256": "44fab5b8895c4842ba3ce1a32d1b34ec15cd8b652d3b0feb51e29ea89574cf85"
+      "sha256": "f049f18f38a1999c07765c92038acdd7d96fcc0662c7dac6b21ccba94c10eb30"
     },
     {
       "path": "assess_workbench/__init__.py",
@@ -65,7 +65,7 @@
     },
     {
       "path": "assess_workbench/cli.py",
-      "sha256": "1ecb3989fc38fc6c970e289041eafcac5f3dac7677030395c64d953da098ada0"
+      "sha256": "da5c8eb849fbd90d0a5b2651264a5781c57d0db0217415efca5e85f22761d9f3"
     },
     {
       "path": "assess_workbench/contract.py",
@@ -97,7 +97,7 @@
     },
     {
       "path": "docs/CP1_DESIGN.md",
-      "sha256": "fef49158d1b4572a9446c98b02abd2feac53d999c48b0be69d9a9410414328c1"
+      "sha256": "e33fc68d9ba5de367239e81ed963ff559756c4cdd7f21ebfab4c2b2c4023494f"
     },
     {
       "path": "docs/R2_REWORK.md",
@@ -112,8 +112,12 @@
       "sha256": "79fe3454f57e5277200e96969b63fb541bb47c4e7e76a3315dbe2af8c5d71d2d"
     },
     {
+      "path": "docs/R5_REWORK.md",
+      "sha256": "fee87d4e243645a3ea12eb2fab690818674b202fb47b9943e9e2ef11b66e560f"
+    },
+    {
       "path": "evidence/PUBLIC_STDERR.txt",
-      "sha256": "abcdcfcc8a7c1e1c02473c89ab3db6607cdd694e5fce982073dda663c5b48444"
+      "sha256": "51024c00325eddb486a37b2ad17b4ababea332aa681ed42fa366d29e45ac99b0"
     },
     {
       "path": "evidence/PUBLIC_STDOUT.txt",
@@ -161,95 +165,95 @@
     },
     {
       "path": "logs/00_host.txt",
-      "sha256": "a7f8863ac9b189f3fedd4aeddfe5240b3f8d2299c2155f2a29b15b9776248a19"
+      "sha256": "bc1a0fa8cb9be8b29f87d8a016812bc8627839c359c0a8df4316b9e499daddc4"
     },
     {
       "path": "logs/01_container_environment.txt",
-      "sha256": "65221f8a24bba6330d53a393abcb15f54666b0132112950fc98897aee656a995"
+      "sha256": "437bfda9432ad61214e6dbe5904bec72b9ecbdcb3023d8b8681866b0c7e8ccb2"
     },
     {
       "path": "logs/02_check_package.txt",
-      "sha256": "bb672fc34c20d191aca6f328e321a99090d0d6082950b9c821f7cd43a95e1747"
+      "sha256": "5f7f7a22677b6543528e5174bee0f2c9763e6612bf4990e294dd83f91fbb579f"
     },
     {
       "path": "logs/03_run_acceptance.txt",
-      "sha256": "0a40d6607a10379a27d2bfe2f3250f75c935cc0e3a62df287a6d392b107348fc"
+      "sha256": "502a71a855a86d5dcf773265f44a933fd939b956b88789f201dbe8b20f939f53"
     },
     {
       "path": "logs/04_candidate_tests.txt",
-      "sha256": "4493741efee9b285bef193eea7a4825abd038590f97b375dc9d99ffe6b0c5e42"
+      "sha256": "7a59ec8d7982b1c034acd752b02088475b9624bbe55b2d0e5064b4f71b4b944c"
     },
     {
       "path": "logs/05_cli_json.txt",
-      "sha256": "2416b3c8db78d9489488bec2607799d2e92cd794f130c6147abd16c12eeb2950"
+      "sha256": "6acccc800c366067d4d975e15f00bc14733f9f08eeb49e95610f533e4c6c2aa8"
     },
     {
       "path": "logs/06_cli_rerun_output_exists.txt",
-      "sha256": "f11da7cbea4b677b81d8cc07e164e223f1957884bc4592afd15b813fe36b812a"
+      "sha256": "de661d794de3b23d6f8192dd857fa5e9c5c647c65b3134543a0366fde392768d"
     },
     {
       "path": "logs/07_cli_csv.txt",
-      "sha256": "7ca52cd9c1e3822869cda6751f4ec8c467c899db726dd4f7c7d4ac3ee113fb5b"
+      "sha256": "d849015c02ee4cc3d57b3b7c1c898f00a377e7c114f97c2b8e3ffae21c699db0"
     },
     {
       "path": "logs/08_cli_json_csv_identical.txt",
-      "sha256": "325d78ee40af3f930335dff8370509b8bea29b4a68203963b2f213cc126f69e0"
+      "sha256": "9338f4fa4ec4290a117b475141b4a4c757022e5f74a2c5503dbb473e40a543c7"
     },
     {
       "path": "logs/09_cli_error_cases.txt",
-      "sha256": "5a197bf6deb752566bac69d5760bcb4e22b67aff021e54803232475721d369e1"
+      "sha256": "b68879d7010081cf917199e44d95c9c0ad43e824506c7409771f9987209fd392"
     },
     {
       "path": "logs/10_ruff_check.txt",
-      "sha256": "231662e9fb95f4f4434a4c12aa3fdc1fa8f8de87ef508547822b70930e8b595c"
+      "sha256": "62dd02c7b32ca39ca8c0e0a5cf6095bb1082d232837d8054e400c2dcada2db67"
     },
     {
       "path": "logs/11_ruff_format_check.txt",
-      "sha256": "1e15375ae679d39db8044121303204b20e9226d24dd2c61caabf101b3c5d0e24"
+      "sha256": "d90a1d31e023549ed3df2c408490b71c575e471192fa6f2c156f28e8b1c46867"
     },
     {
       "path": "logs/12_mypy_strict.txt",
-      "sha256": "bdb8aa0bd51d385a6a97ef0bc08bdf08136b2047985a6b82e79558e778437c3f"
+      "sha256": "8676688765e7570376ba2339706a3fd49d4bfeabd360623e38c8807b1529aef1"
     },
     {
       "path": "logs/13_macos_candidate_tests.txt",
-      "sha256": "34c01a1775c45c6d6763ad424b34fc9f91bf0d0d766f9d6e2c939233a56fc8f5"
+      "sha256": "3cb9a2e5b2acd993684e679af40ec1d21b18cc5c1478bb4dd2ff67b9b3145f6f"
     },
     {
       "path": "logs/14_macos_public_tests.txt",
-      "sha256": "5010cef422c8465d91f9fc8863a81e454fcf6c755b15fd14451dc3d9d6611477"
+      "sha256": "8b5e8a3f8bf5906e6079fe67c67ff05e76bcd84d3e63d5cb5bd4965ccd4dbc61"
     },
     {
       "path": "logs/15_mutation_smoke.txt",
-      "sha256": "d7bd0b65f62fbd80098ccf20579c359843dfb003ddbabde4e0872a2f83cfd240"
+      "sha256": "ba09e10de3092c113ec5d0d2c6e45986c0c114abb4bd11d21a1ca890707fcc2e"
     },
     {
       "path": "logs/16_cli_candidate_example.txt",
-      "sha256": "eeb383633a12a27580534a28f49b00c2dc32bac8a24f667becd75c00191ec71e"
+      "sha256": "7199794458179273b10942b4b2b8d14a9d68585109e66d616c7fe10dc4fdbf43"
     },
     {
-      "path": "logs/17_r4_regression_tests_on_r3_code.txt",
-      "sha256": "95d91436f9932a310e9007265865ac16b93c9e736259e6eb00a6acbe2ffac3aa"
+      "path": "logs/17_r5_regression_tests_on_r4_code.txt",
+      "sha256": "710b382b28a8c3ed7bde9d5485ec3697b8fd7e9b88c9188bd81235c7a92d57a9"
     },
     {
-      "path": "logs/18_r4_regression_tests.txt",
-      "sha256": "4db804d4440bb4ce20a3c7a67126b82bf04895118ec094edcd90550af7bf9a9b"
+      "path": "logs/18_r5_regression_tests.txt",
+      "sha256": "3ebc7c6fc1ecdb0852de1d3f3a620fbf2d5a671d8b60130f71c899c55e0f09e1"
     },
     {
       "path": "logs/19_r2_review_reproduction_api.txt",
-      "sha256": "8686167119b961565a4c91300e078b87e07372692bfac133b5e82ee2c8cd1034"
+      "sha256": "6944f5ea666175855418e19539a0a5afd8f7ac78d294fc0d54bf210b5086a42d"
     },
     {
       "path": "logs/20_r2_review_reproduction_cli.txt",
-      "sha256": "48b048f98262df8ee559c94a3ff49f7db20a7bb5949f07d25a1c044db27eac95"
+      "sha256": "e8aae5080a8b435b7cb158f5c7ae75d875d7bd995f8e9e849b02a9ebb756f9ee"
     },
     {
       "path": "logs/21_r2_long_integer_cost.txt",
-      "sha256": "5f87e89ec52fbe0703dddb66e3e9b6b0dc65e3a479beb8c263e1adafa72c0e6d"
+      "sha256": "71af7670a9fd4ddfc90de2675506991123312e4582dfa50575f64d47edf7b2a8"
     },
     {
-      "path": "logs/22_r4_output_directory_safety.txt",
-      "sha256": "db7fa6b5033b4f46a6f2d2890a70b5fc1843536ea5005bc3414bb6149b96a430"
+      "path": "logs/22_r5_output_directory_safety.txt",
+      "sha256": "333de0fbc14b32698b935c56ad69d78d487085b616ce5e1e0f80cd14fab3567b"
     },
     {
       "path": "logs/candidate_example_report.html",
@@ -269,7 +273,7 @@
     },
     {
       "path": "tests/test_candidate_cli.py",
-      "sha256": "7ba810de9c6415a6b2d844a4b639f4f0d53068977140c3af8ce0ca9f6cef4f58"
+      "sha256": "60bb81817d0c79f2a860a02af61fb1395a6537ae0abb40de0f5f55e05a45422b"
     },
     {
       "path": "tests/test_candidate_environment.py",

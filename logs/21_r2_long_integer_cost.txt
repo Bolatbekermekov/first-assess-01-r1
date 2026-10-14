@@ -10,12 +10,12 @@ for limit in (4300, 0):
     row = analyze_rows(rows, scope=scope)["rows"][0]
     print(f"set_int_max_str_digits({limit}): {len(data)} bytes, load_rows {elapsed:.1f} s,",
           f"exact: {rows == [10 ** (len(data) - 2) - 1]}, {row['"'"'status'"'"']} {row['"'"'codes'"'"']}")'
-# started_utc: 2026-10-14T18:08:41+00:00
+# started_utc: 2026-10-14T19:48:29+00:00
 # cwd: /work
 # python: 3.12.13 (CPython)
 # platform: Linux-6.12.76-linuxkit-aarch64-with-glibc2.41
 # exit_code: 0
 ## stdout
-set_int_max_str_digits(4300): 10485760 bytes, load_rows 12.4 s, exact: True, REJECTED ['INVALID_ROW_SCHEMA']
-set_int_max_str_digits(0): 10485760 bytes, load_rows 12.6 s, exact: True, REJECTED ['INVALID_ROW_SCHEMA']
+set_int_max_str_digits(4300): 10485760 bytes, load_rows 12.7 s, exact: True, REJECTED ['INVALID_ROW_SCHEMA']
+set_int_max_str_digits(0): 10485760 bytes, load_rows 12.5 s, exact: True, REJECTED ['INVALID_ROW_SCHEMA']
 ## stderr

@@ -3,12 +3,12 @@ rm -rf /tmp/trusted && mkdir -m 700 /tmp/trusted
 python -m assess_workbench --input fixtures/leads.json --format json --client-id synthetic-client --campaign-id synthetic-campaign --out-dir /tmp/trusted/own
 echo "trusted-parent exit=$?"
 python -c '"'"'import os, stat; s = os.stat("/tmp/trusted/own"); print("out-dir mode=%04o owner_is_euid=%s entries=%s" % (stat.S_IMODE(s.st_mode), s.st_uid == os.geteuid(), sorted(os.listdir("/tmp/trusted/own"))))'"'"'
-# Untrusted (group/other-writable, no sticky) parent: the CLI refuses before writing any report.
+# Untrusted (group/other-writable, no sticky) parent: the CLI refuses before creating out-dir.
 rm -rf /tmp/shared && mkdir /tmp/shared && chmod 0777 /tmp/shared
 python -m assess_workbench --input fixtures/leads.json --format json --client-id synthetic-client --campaign-id synthetic-campaign --out-dir /tmp/shared/out
 echo "untrusted-parent exit=$?"
-python -c '"'"'import os; p="/tmp/shared/out"; print("out-dir entries after refusal:", sorted(os.listdir(p)) if os.path.isdir(p) else "absent")'"'"''
-# started_utc: 2026-10-14T18:09:14+00:00
+python -c '"'"'import os; p="/tmp/shared/out"; print("out-dir after refusal:", sorted(os.listdir(p)) if os.path.isdir(p) else "absent (not created)")'"'"''
+# started_utc: 2026-10-14T19:49:03+00:00
 # cwd: /work
 # python: 3.12.13 (CPython)
 # platform: Linux-6.12.76-linuxkit-aarch64-with-glibc2.41
@@ -18,6 +18,6 @@ REPORT_CREATED
 trusted-parent exit=0
 out-dir mode=0700 owner_is_euid=True entries=['report.html', 'report.json']
 untrusted-parent exit=2
-out-dir entries after refusal: []
+out-dir after refusal: absent (not created)
 ## stderr
 ERROR IO_ERROR

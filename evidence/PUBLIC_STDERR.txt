@@ -12,6 +12,6 @@ test_surrogate_text_rejected (test_public_acceptance.PublicAcceptance.test_surro
 test_url_and_control_character_boundaries (test_public_acceptance.PublicAcceptance.test_url_and_control_character_boundaries) ... ok
 
 ----------------------------------------------------------------------
-Ran 12 tests in 0.659s
+Ran 12 tests in 0.851s
 
 OK
