@@ -61,7 +61,7 @@ format: ## Исправить форматирование и простые з�
 mutation: ## Мутационная проверка тестов (временно правит код, не прерывать)
 	$(PY) dev/mutation_smoke.py
 
-zip: ## Собрать dist/FIRST_ASSESS_01_RETURN_R2.zip и проверить распаковкой
+zip: ## Собрать dist/FIRST_ASSESS_01_RETURN_R3.zip и проверить распаковкой
 	$(PY) dev/build_return.py build
 	$(PY) dev/build_return.py verify
 

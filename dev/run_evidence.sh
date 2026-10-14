@@ -7,21 +7,28 @@ SCOPE_ARGS=(--client-id synthetic-client --campaign-id synthetic-campaign)
 run() { docker compose run --rm -T py python dev/capture.py "$@" 2>/dev/null; }
 tools() { docker compose --profile tools run --rm -T tools python dev/capture.py "$@" 2>/dev/null; }
 MAC_PY="$HOME/.local/share/uv/python/cpython-3.12-macos-aarch64-none/bin/python3.12"
-# The R1 return as reviewed: its RETURN_MANIFEST.json is byte-identical to the one in FIRST_ASSESS_01_RETURN_R1.zip.
-R1_COMMIT=8e2e52b5065d4380228fd84f8b40029c24ab1290
+# The R2 return as reviewed: its RETURN_MANIFEST.json is byte-identical to the one in FIRST_ASSESS_01_RETURN_R2.zip.
+# R3 fixes a gap that was present in it, so the new tests must fail on this code and pass on R3.
+PREV_COMMIT=9a76d1a1ae7931dd1c6cb74209873f5f247e30a9
 
-# R2 regression tests: JSON integers vs sys.set_int_max_str_digits, the environment, out-dir substitution.
-read -r -d '' R2_TESTS <<'EOF' || true
+# R3 regression tests: JSON integers vs sys.set_int_max_str_digits, the environment, out-dir substitution (the R3
+# owner/mode checks live in DirectorySwapTests and in the trailing-slash case).
+read -r -d '' REGRESSION_TESTS <<'EOF' || true
 python -m unittest discover -s tests -p "test_candidate_*.py" -k IntegerDigitLimitTests -k EnvironmentTests -k DirectorySwapTests -k test_out_dir_with_trailing_slashes -v
 EOF
-read -r -d '' R2_TESTS_ON_R1_CODE <<EOF || true
-cd out/r1 && python -c '
+read -r -d '' REGRESSION_ON_PREV_CODE <<EOF || true
+cd out/prev && python -c '
 import hashlib, json, pathlib
 manifest = json.loads(pathlib.Path("RETURN_MANIFEST.json").read_text(encoding="utf-8"))
 code = [entry for entry in manifest["files"] if entry["path"].startswith("assess_workbench/")]
 same = sum(hashlib.sha256(pathlib.Path(entry["path"]).read_bytes()).hexdigest() == entry["sha256"] for entry in code)
-print(f"code under test is the R1 return: {same}/{len(code)} assess_workbench files match its RETURN_MANIFEST.json")
-' && exec $R2_TESTS
+print(f"code under test is the R2 return: {same}/{len(code)} assess_workbench files match its RETURN_MANIFEST.json")
+' && exec $REGRESSION_TESTS
+EOF
+read -r -d '' OWNER_ONLY_OUTDIR <<'EOF' || true
+rm -rf /tmp/own && python -m assess_workbench --input fixtures/leads.json --format json --client-id synthetic-client --campaign-id synthetic-campaign --out-dir /tmp/own
+echo "exit=$?"
+python -c 'import os, stat; s = os.stat("/tmp/own"); print("out-dir mode=%04o owner_is_euid=%s entries=%s" % (stat.S_IMODE(s.st_mode), s.st_uid == os.geteuid(), sorted(os.listdir("/tmp/own"))))'
 EOF
 read -r -d '' REPRODUCTION_API <<'EOF' || true
 import sys
@@ -95,13 +102,14 @@ run logs/16_cli_candidate_example.txt -- python -m assess_workbench --input cand
 cp sample_output_example/report.json logs/candidate_example_report.json
 cp sample_output_example/report.html logs/candidate_example_report.html
 rm -rf sample_output_example
-rm -rf out/r1 && mkdir -p out/r1 && git archive "$R1_COMMIT" | tar -x -C out/r1
-cp tests/test_candidate_*.py out/r1/tests/
-run logs/17_r2_regression_tests_on_r1_code.txt -- sh -c "$R2_TESTS_ON_R1_CODE"
-rm -rf out/r1
-run logs/18_r2_regression_tests.txt -- sh -c "$R2_TESTS"
+rm -rf out/prev && mkdir -p out/prev && git archive "$PREV_COMMIT" | tar -x -C out/prev
+cp tests/test_candidate_*.py out/prev/tests/
+run logs/17_r3_regression_tests_on_r2_code.txt -- sh -c "$REGRESSION_ON_PREV_CODE"
+rm -rf out/prev
+run logs/18_r3_regression_tests.txt -- sh -c "$REGRESSION_TESTS"
 run logs/19_r2_review_reproduction_api.txt -- python -c "$REPRODUCTION_API"
 run logs/20_r2_review_reproduction_cli.txt -- sh -c "$REPRODUCTION_CLI"
 run logs/21_r2_long_integer_cost.txt -- python -c "$LONG_INTEGER_COST"
+run logs/22_r3_output_directory_is_owner_only.txt -- sh -c "$OWNER_ONLY_OUTDIR"
 git status --short assess_workbench tests
 echo "evidence regenerated"
