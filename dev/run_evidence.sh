@@ -7,6 +7,61 @@ SCOPE_ARGS=(--client-id synthetic-client --campaign-id synthetic-campaign)
 run() { docker compose run --rm -T py python dev/capture.py "$@" 2>/dev/null; }
 tools() { docker compose --profile tools run --rm -T tools python dev/capture.py "$@" 2>/dev/null; }
 MAC_PY="$HOME/.local/share/uv/python/cpython-3.12-macos-aarch64-none/bin/python3.12"
+# The R1 return as reviewed: its RETURN_MANIFEST.json is byte-identical to the one in FIRST_ASSESS_01_RETURN_R1.zip.
+R1_COMMIT=8e2e52b5065d4380228fd84f8b40029c24ab1290
+
+# R2 regression tests: JSON integers vs sys.set_int_max_str_digits, the environment, out-dir substitution.
+read -r -d '' R2_TESTS <<'EOF' || true
+python -m unittest discover -s tests -p "test_candidate_*.py" -k IntegerDigitLimitTests -k EnvironmentTests -k DirectorySwapTests -k test_out_dir_with_trailing_slashes -v
+EOF
+read -r -d '' R2_TESTS_ON_R1_CODE <<EOF || true
+cd out/r1 && python -c '
+import hashlib, json, pathlib
+manifest = json.loads(pathlib.Path("RETURN_MANIFEST.json").read_text(encoding="utf-8"))
+code = [entry for entry in manifest["files"] if entry["path"].startswith("assess_workbench/")]
+same = sum(hashlib.sha256(pathlib.Path(entry["path"]).read_bytes()).hexdigest() == entry["sha256"] for entry in code)
+print(f"code under test is the R1 return: {same}/{len(code)} assess_workbench files match its RETURN_MANIFEST.json")
+' && exec $R2_TESTS
+EOF
+read -r -d '' REPRODUCTION_API <<'EOF' || true
+import sys
+from assess_workbench.api import analyze_rows, load_rows
+scope = {"schema_version": "ASSESS_SCOPE_V1", "client_id": "synthetic-client", "campaign_id": "synthetic-campaign"}
+data = b"[" + b"9" * 4301 + b"]"  # the reproduction from the R1 review
+for limit in (4300, 640, 0):
+    sys.set_int_max_str_digits(limit)
+    rows = load_rows(data, format="json")
+    row = analyze_rows(rows, scope=scope)["rows"][0]
+    print(f"set_int_max_str_digits({limit}): load_rows -> the exact 4301-digit int: {rows == [10**4301 - 1]};",
+          f"analyze_rows -> {row['status']} {row['codes']}; setting afterwards: {sys.get_int_max_str_digits()}")
+EOF
+read -r -d '' REPRODUCTION_CLI <<'EOF' || true
+python -c 'import sys; sys.stdout.write("[" + "9" * 4301 + "]")' > /tmp/long.json
+for setting in "-X int_max_str_digits=4300" "-X int_max_str_digits=640" "-X int_max_str_digits=0"; do
+  python $setting -m assess_workbench --input /tmp/long.json --format json --client-id synthetic-client --campaign-id synthetic-campaign --out-dir "/tmp/out-${setting##*=}"
+  echo "python $setting: exit=$?"
+done
+PYTHONINTMAXSTRDIGITS=640 python -m assess_workbench --input /tmp/long.json --format json --client-id synthetic-client --campaign-id synthetic-campaign --out-dir /tmp/out-env
+echo "PYTHONINTMAXSTRDIGITS=640 python: exit=$?"
+for out in /tmp/out-640 /tmp/out-0 /tmp/out-env; do
+  cmp /tmp/out-4300/report.json "$out/report.json" && cmp /tmp/out-4300/report.html "$out/report.html" && echo "$out: report.json and report.html byte-identical to /tmp/out-4300"
+done
+python -c 'import json; row = json.load(open("/tmp/out-4300/report.json", encoding="utf-8"))["rows"][0]; print("row 1:", row["status"], row["codes"])'
+EOF
+read -r -d '' LONG_INTEGER_COST <<'EOF' || true
+import sys, time
+from assess_workbench.api import analyze_rows, load_rows
+scope = {"schema_version": "ASSESS_SCOPE_V1", "client_id": "synthetic-client", "campaign_id": "synthetic-campaign"}
+data = b"[" + b"9" * (10_485_760 - 2) + b"]"  # one integer filling the whole byte limit: the costliest JSON number
+for limit in (4300, 0):
+    sys.set_int_max_str_digits(limit)
+    started = time.perf_counter()
+    rows = load_rows(data, format="json")
+    elapsed = time.perf_counter() - started
+    row = analyze_rows(rows, scope=scope)["rows"][0]
+    print(f"set_int_max_str_digits({limit}): {len(data)} bytes, load_rows {elapsed:.1f} s,",
+          f"exact: {rows == [10 ** (len(data) - 2) - 1]}, {row['status']} {row['codes']}")
+EOF
 
 rm -rf logs sample_output sample_output_csv sample_output_example
 mkdir -p logs
@@ -40,5 +95,13 @@ run logs/16_cli_candidate_example.txt -- python -m assess_workbench --input cand
 cp sample_output_example/report.json logs/candidate_example_report.json
 cp sample_output_example/report.html logs/candidate_example_report.html
 rm -rf sample_output_example
+rm -rf out/r1 && mkdir -p out/r1 && git archive "$R1_COMMIT" | tar -x -C out/r1
+cp tests/test_candidate_*.py out/r1/tests/
+run logs/17_r2_regression_tests_on_r1_code.txt -- sh -c "$R2_TESTS_ON_R1_CODE"
+rm -rf out/r1
+run logs/18_r2_regression_tests.txt -- sh -c "$R2_TESTS"
+run logs/19_r2_review_reproduction_api.txt -- python -c "$REPRODUCTION_API"
+run logs/20_r2_review_reproduction_cli.txt -- sh -c "$REPRODUCTION_CLI"
+run logs/21_r2_long_integer_cost.txt -- python -c "$LONG_INTEGER_COST"
 git status --short assess_workbench tests
 echo "evidence regenerated"
