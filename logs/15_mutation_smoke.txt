@@ -1,5 +1,5 @@
 $ python dev/mutation_smoke.py
-# started_utc: 2026-10-13T18:34:04+00:00
+# started_utc: 2026-10-14T05:20:35+00:00
 # cwd: /work
 # python: 3.12.13 (CPython)
 # platform: Linux-6.12.76-linuxkit-aarch64-with-glibc2.41
@@ -17,8 +17,14 @@ KILLED    loading.py      csv.field_size_limit not restored  (tests: loading)
 KILLED    loading.py      decode error chained to WorkbenchError  (tests: loading)
 KILLED    loading.py      blank CSV records skipped  (tests: loading)
 KILLED    loading.py      field size limit raised at import time  (tests: isolation)
+KILLED    loading.py      JSON integers parsed by the default int() again (R1 A6)  (tests: loading, environment)
+KILLED    loading.py      integer chunks longer than the digit-limit exemption  (tests: loading)
+KILLED    loading.py      JSON parsed by the recursive pure-Python scanner (depth follows sys.setrecursionlimit)  (tests: loading)
 KILLED    html_report.py  quotes left unescaped in HTML  (tests: html)
 KILLED    cli.py          output directory created with makedirs(exist_ok=True)  (tests: cli)
 KILLED    cli.py          whole input read without the size cap  (tests: cli)
-15/15 injected defects detected
+KILLED    cli.py          populated directory swapped in after mkdir accepted  (tests: cli)
+KILLED    cli.py          success reported without re-checking what out-dir names  (tests: cli)
+KILLED    cli.py          trailing slash kept, so O_NOFOLLOW does not apply  (tests: cli)
+21/21 injected defects detected
 ## stderr

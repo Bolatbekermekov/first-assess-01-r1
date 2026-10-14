@@ -1,0 +1,30 @@
+$ sh -c 'python -c '"'"'import sys; sys.stdout.write("[" + "9" * 4301 + "]")'"'"' > /tmp/long.json
+for setting in "-X int_max_str_digits=4300" "-X int_max_str_digits=640" "-X int_max_str_digits=0"; do
+  python $setting -m assess_workbench --input /tmp/long.json --format json --client-id synthetic-client --campaign-id synthetic-campaign --out-dir "/tmp/out-${setting##*=}"
+  echo "python $setting: exit=$?"
+done
+PYTHONINTMAXSTRDIGITS=640 python -m assess_workbench --input /tmp/long.json --format json --client-id synthetic-client --campaign-id synthetic-campaign --out-dir /tmp/out-env
+echo "PYTHONINTMAXSTRDIGITS=640 python: exit=$?"
+for out in /tmp/out-640 /tmp/out-0 /tmp/out-env; do
+  cmp /tmp/out-4300/report.json "$out/report.json" && cmp /tmp/out-4300/report.html "$out/report.html" && echo "$out: report.json and report.html byte-identical to /tmp/out-4300"
+done
+python -c '"'"'import json; row = json.load(open("/tmp/out-4300/report.json", encoding="utf-8"))["rows"][0]; print("row 1:", row["status"], row["codes"])'"'"''
+# started_utc: 2026-10-14T05:21:08+00:00
+# cwd: /work
+# python: 3.12.13 (CPython)
+# platform: Linux-6.12.76-linuxkit-aarch64-with-glibc2.41
+# exit_code: 0
+## stdout
+REPORT_CREATED
+python -X int_max_str_digits=4300: exit=0
+REPORT_CREATED
+python -X int_max_str_digits=640: exit=0
+REPORT_CREATED
+python -X int_max_str_digits=0: exit=0
+REPORT_CREATED
+PYTHONINTMAXSTRDIGITS=640 python: exit=0
+/tmp/out-640: report.json and report.html byte-identical to /tmp/out-4300
+/tmp/out-0: report.json and report.html byte-identical to /tmp/out-4300
+/tmp/out-env: report.json and report.html byte-identical to /tmp/out-4300
+row 1: REJECTED ['INVALID_ROW_SCHEMA']
+## stderr

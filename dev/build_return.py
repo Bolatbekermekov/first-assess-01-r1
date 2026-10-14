@@ -1,7 +1,7 @@
 """Dev-only: build RETURN_MANIFEST.json and the return ZIP from an explicit allowlist, and verify the ZIP.
 
 Usage (inside the container, from the project root):
-  python dev/build_return.py build    # RETURN_MANIFEST.json + dist/FIRST_ASSESS_01_RETURN_R1.zip
+  python dev/build_return.py build    # RETURN_MANIFEST.json + dist/FIRST_ASSESS_01_RETURN_R2.zip
   python dev/build_return.py verify   # extract to a temporary directory; re-check hashes, layout and all tests
 """
 
@@ -16,7 +16,8 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-ZIP_ROOT = "FIRST_ASSESS_01_RETURN_R1"
+REVISION = "R2"
+ZIP_ROOT = f"FIRST_ASSESS_01_RETURN_{REVISION}"
 ZIP_PATH = ROOT / "dist" / f"{ZIP_ROOT}.zip"
 MANIFEST = "RETURN_MANIFEST.json"
 RETURN_DOCUMENTS = ("TASK_REPORT.md", "TEST_MATRIX.md", "LIMITATIONS.md", "DECOMPOSITION_PROPOSAL.md")
@@ -24,7 +25,7 @@ SHIPPED_TREES = ("candidate_fixtures/", "docs/", "logs/", "evidence/")
 # Top-level entries of the repository that never go into the ZIP: dev environment, build output, repository README.
 DEV_ONLY = {".git", "dev", "dist", "out", "compose.yaml", "Makefile", "README.md"}
 IGNORED_PARTS = {"__pycache__", ".DS_Store", ".ruff_cache", ".mypy_cache"}
-ZIP_TIMESTAMP = (2026, 10, 13, 0, 0, 0)
+ZIP_TIMESTAMP = (2026, 10, 14, 0, 0, 0)
 
 
 def sha256(path: Path) -> str:
@@ -79,7 +80,7 @@ def build() -> None:
     files = collect()
     manifest = {
         "task_id": "FIRST-ASSESS-01",
-        "revision": "R1",
+        "revision": REVISION,
         "base_manifest_sha256": sha256(ROOT / "BASE_MANIFEST.json"),
         "files": [{"path": relative, "sha256": sha256(ROOT / relative)} for relative in files],
     }

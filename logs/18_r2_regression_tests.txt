@@ -1,0 +1,23 @@
+$ sh -c 'python -m unittest discover -s tests -p "test_candidate_*.py" -k IntegerDigitLimitTests -k EnvironmentTests -k DirectorySwapTests -k test_out_dir_with_trailing_slashes -v'
+# started_utc: 2026-10-14T05:21:06+00:00
+# cwd: /work
+# python: 3.12.13 (CPython)
+# platform: Linux-6.12.76-linuxkit-aarch64-with-glibc2.41
+# exit_code: 0
+## stdout
+## stderr
+test_directory_replaced_after_it_was_opened_is_not_reported_as_created (test_candidate_cli.DirectorySwapTests.test_directory_replaced_after_it_was_opened_is_not_reported_as_created) ... ok
+test_empty_directory_swapped_in_after_mkdir_cannot_be_detected (test_candidate_cli.DirectorySwapTests.test_empty_directory_swapped_in_after_mkdir_cannot_be_detected) ... ok
+test_populated_directory_swapped_in_after_mkdir_receives_nothing (test_candidate_cli.DirectorySwapTests.test_populated_directory_swapped_in_after_mkdir_receives_nothing) ... ok
+test_symlink_swapped_in_after_mkdir_is_not_followed (test_candidate_cli.DirectorySwapTests.test_symlink_swapped_in_after_mkdir_is_not_followed) ... ok
+test_out_dir_with_trailing_slashes (test_candidate_cli.SuccessTests.test_out_dir_with_trailing_slashes) ... ok
+test_interpreter_settings_and_locale_do_not_change_the_result (test_candidate_environment.EnvironmentTests.test_interpreter_settings_and_locale_do_not_change_the_result) ... ok
+test_long_integer_field_value_reaches_its_field_rule (test_candidate_loading.IntegerDigitLimitTests.test_long_integer_field_value_reaches_its_field_rule) ... ok
+test_long_integers_keep_their_exact_value_at_any_depth (test_candidate_loading.IntegerDigitLimitTests.test_long_integers_keep_their_exact_value_at_any_depth) ... ok
+test_review_reproduction_is_a_rejected_row_under_every_limit (test_candidate_loading.IntegerDigitLimitTests.test_review_reproduction_is_a_rejected_row_under_every_limit) ... ok
+test_the_process_wide_setting_is_never_changed (test_candidate_loading.IntegerDigitLimitTests.test_the_process_wide_setting_is_never_changed) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 1.258s
+
+OK

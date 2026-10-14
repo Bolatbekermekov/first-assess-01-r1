@@ -1,5 +1,5 @@
 $ python -m unittest discover -s tests -p 'test_candidate_*.py' -v
-# started_utc: 2026-10-13T18:33:52+00:00
+# started_utc: 2026-10-14T05:20:23+00:00
 # cwd: /work
 # python: 3.12.13 (CPython)
 # platform: Linux-6.12.76-linuxkit-aarch64-with-glibc2.41
@@ -8,7 +8,10 @@ $ python -m unittest discover -s tests -p 'test_candidate_*.py' -v
 ## stderr
 test_abbreviated_options_are_rejected (test_candidate_cli.ArgumentTests.test_abbreviated_options_are_rejected) ... ok
 test_missing_arguments_are_reported_by_argparse (test_candidate_cli.ArgumentTests.test_missing_arguments_are_reported_by_argparse) ... ok
-test_directory_swapped_for_a_symlink_after_mkdir_is_not_followed (test_candidate_cli.InProcessTests.test_directory_swapped_for_a_symlink_after_mkdir_is_not_followed) ... ok
+test_directory_replaced_after_it_was_opened_is_not_reported_as_created (test_candidate_cli.DirectorySwapTests.test_directory_replaced_after_it_was_opened_is_not_reported_as_created) ... ok
+test_empty_directory_swapped_in_after_mkdir_cannot_be_detected (test_candidate_cli.DirectorySwapTests.test_empty_directory_swapped_in_after_mkdir_cannot_be_detected) ... ok
+test_populated_directory_swapped_in_after_mkdir_receives_nothing (test_candidate_cli.DirectorySwapTests.test_populated_directory_swapped_in_after_mkdir_receives_nothing) ... ok
+test_symlink_swapped_in_after_mkdir_is_not_followed (test_candidate_cli.DirectorySwapTests.test_symlink_swapped_in_after_mkdir_is_not_followed) ... ok
 test_keyboard_interrupt_is_not_swallowed (test_candidate_cli.InProcessTests.test_keyboard_interrupt_is_not_swallowed) ... ok
 test_losing_the_mkdir_race_is_output_exists (test_candidate_cli.InProcessTests.test_losing_the_mkdir_race_is_output_exists) ... ok
 test_successful_run (test_candidate_cli.InProcessTests.test_successful_run) ... ok
@@ -32,7 +35,9 @@ test_symlink_to_a_directory_is_not_followed (test_candidate_cli.OutputExistsTest
 test_bom_crlf_quoted_header_spreadsheet_export (test_candidate_cli.SuccessTests.test_bom_crlf_quoted_header_spreadsheet_export) ... ok
 test_input_file_is_not_modified_and_nothing_else_is_created (test_candidate_cli.SuccessTests.test_input_file_is_not_modified_and_nothing_else_is_created) ... ok
 test_json_and_csv_produce_the_same_report_files (test_candidate_cli.SuccessTests.test_json_and_csv_produce_the_same_report_files) ... ok
+test_out_dir_with_trailing_slashes (test_candidate_cli.SuccessTests.test_out_dir_with_trailing_slashes) ... ok
 test_unicode_and_spaces_in_paths (test_candidate_cli.SuccessTests.test_unicode_and_spaces_in_paths) ... ok
+test_interpreter_settings_and_locale_do_not_change_the_result (test_candidate_environment.EnvironmentTests.test_interpreter_settings_and_locale_do_not_change_the_result) ... ok
 test_length_after_normalization (test_candidate_fields.CompanyNameTests.test_length_after_normalization) ... ok
 test_nfc_and_whitespace_collapse (test_candidate_fields.CompanyNameTests.test_nfc_and_whitespace_collapse) ... ok
 test_nfc_can_lengthen_a_value_past_the_limit (test_candidate_fields.CompanyNameTests.test_nfc_can_lengthen_a_value_past_the_limit) ... ok
@@ -109,14 +114,18 @@ test_encoding_is_checked_before_syntax (test_candidate_loading.ErrorPrecedenceTe
 test_format_must_be_exactly_json_or_csv (test_candidate_loading.ErrorPrecedenceTests.test_format_must_be_exactly_json_or_csv) ... ok
 test_size_is_checked_before_encoding (test_candidate_loading.ErrorPrecedenceTests.test_size_is_checked_before_encoding) ... ok
 test_syntax_is_checked_before_row_count (test_candidate_loading.ErrorPrecedenceTests.test_syntax_is_checked_before_row_count) ... ok
+test_long_integer_field_value_reaches_its_field_rule (test_candidate_loading.IntegerDigitLimitTests.test_long_integer_field_value_reaches_its_field_rule) ... ok
+test_long_integers_keep_their_exact_value_at_any_depth (test_candidate_loading.IntegerDigitLimitTests.test_long_integers_keep_their_exact_value_at_any_depth) ... ok
+test_review_reproduction_is_a_rejected_row_under_every_limit (test_candidate_loading.IntegerDigitLimitTests.test_review_reproduction_is_a_rejected_row_under_every_limit) ... ok
+test_the_process_wide_setting_is_never_changed (test_candidate_loading.IntegerDigitLimitTests.test_the_process_wide_setting_is_never_changed) ... ok
 test_array_elements_are_returned_unchanged (test_candidate_loading.JsonDocumentTests.test_array_elements_are_returned_unchanged) ... ok
 test_deep_nesting_is_a_document_error (test_candidate_loading.JsonDocumentTests.test_deep_nesting_is_a_document_error) ... ok
 test_duplicate_keys_are_rejected_at_any_depth (test_candidate_loading.JsonDocumentTests.test_duplicate_keys_are_rejected_at_any_depth) ... ok
 test_escaped_surrogate_loads_and_is_rejected_by_the_analyzer (test_candidate_loading.JsonDocumentTests.test_escaped_surrogate_loads_and_is_rejected_by_the_analyzer) ... ok
-test_huge_integer_is_a_document_error (test_candidate_loading.JsonDocumentTests.test_huge_integer_is_a_document_error) ... ok
 test_invalid_documents (test_candidate_loading.JsonDocumentTests.test_invalid_documents) ... ok
 test_json_whitespace_around_the_root (test_candidate_loading.JsonDocumentTests.test_json_whitespace_around_the_root) ... ok
 test_keys_that_differ_only_in_unicode_normalization_are_distinct (test_candidate_loading.JsonDocumentTests.test_keys_that_differ_only_in_unicode_normalization_are_distinct) ... ok
+test_nesting_limit_does_not_follow_sys_setrecursionlimit (test_candidate_loading.JsonDocumentTests.test_nesting_limit_does_not_follow_sys_setrecursionlimit) ... ok
 test_non_finite_constants_are_rejected_at_any_depth (test_candidate_loading.JsonDocumentTests.test_non_finite_constants_are_rejected_at_any_depth) ... ok
 test_out_of_range_float_is_passed_to_the_analyzer (test_candidate_loading.JsonDocumentTests.test_out_of_range_float_is_passed_to_the_analyzer) ... ok
 test_bom_counts_towards_the_size_limit (test_candidate_loading.LimitTests.test_bom_counts_towards_the_size_limit) ... ok
@@ -149,6 +158,6 @@ test_scope_identifiers (test_candidate_report.ScopeAndRowListTests.test_scope_id
 test_scope_must_be_an_exact_dict_with_exactly_three_keys (test_candidate_report.ScopeAndRowListTests.test_scope_must_be_an_exact_dict_with_exactly_three_keys) ... ok
 
 ----------------------------------------------------------------------
-Ran 141 tests in 4.801s
+Ran 150 tests in 5.807s
 
 OK

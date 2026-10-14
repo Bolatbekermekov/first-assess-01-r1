@@ -1,0 +1,322 @@
+$ sh -c 'cd out/r1 && python -c '"'"'
+import hashlib, json, pathlib
+manifest = json.loads(pathlib.Path("RETURN_MANIFEST.json").read_text(encoding="utf-8"))
+code = [entry for entry in manifest["files"] if entry["path"].startswith("assess_workbench/")]
+same = sum(hashlib.sha256(pathlib.Path(entry["path"]).read_bytes()).hexdigest() == entry["sha256"] for entry in code)
+print(f"code under test is the R1 return: {same}/{len(code)} assess_workbench files match its RETURN_MANIFEST.json")
+'"'"' && exec python -m unittest discover -s tests -p "test_candidate_*.py" -k IntegerDigitLimitTests -k EnvironmentTests -k DirectorySwapTests -k test_out_dir_with_trailing_slashes -v'
+# started_utc: 2026-10-14T05:21:05+00:00
+# cwd: /work
+# python: 3.12.13 (CPython)
+# platform: Linux-6.12.76-linuxkit-aarch64-with-glibc2.41
+# exit_code: 1
+## stdout
+code under test is the R1 return: 11/11 assess_workbench files match its RETURN_MANIFEST.json
+## stderr
+test_directory_replaced_after_it_was_opened_is_not_reported_as_created (test_candidate_cli.DirectorySwapTests.test_directory_replaced_after_it_was_opened_is_not_reported_as_created) ... FAIL
+test_empty_directory_swapped_in_after_mkdir_cannot_be_detected (test_candidate_cli.DirectorySwapTests.test_empty_directory_swapped_in_after_mkdir_cannot_be_detected) ... ok
+test_populated_directory_swapped_in_after_mkdir_receives_nothing (test_candidate_cli.DirectorySwapTests.test_populated_directory_swapped_in_after_mkdir_receives_nothing) ... FAIL
+test_symlink_swapped_in_after_mkdir_is_not_followed (test_candidate_cli.DirectorySwapTests.test_symlink_swapped_in_after_mkdir_is_not_followed) ... 
+  test_symlink_swapped_in_after_mkdir_is_not_followed (test_candidate_cli.DirectorySwapTests.test_symlink_swapped_in_after_mkdir_is_not_followed) (suffix='/') ... FAIL
+  test_symlink_swapped_in_after_mkdir_is_not_followed (test_candidate_cli.DirectorySwapTests.test_symlink_swapped_in_after_mkdir_is_not_followed) (suffix='//') ... FAIL
+test_out_dir_with_trailing_slashes (test_candidate_cli.SuccessTests.test_out_dir_with_trailing_slashes) ... ok
+test_interpreter_settings_and_locale_do_not_change_the_result (test_candidate_environment.EnvironmentTests.test_interpreter_settings_and_locale_do_not_change_the_result) ... FAIL
+test_long_integer_field_value_reaches_its_field_rule (test_candidate_loading.IntegerDigitLimitTests.test_long_integer_field_value_reaches_its_field_rule) ... 
+  test_long_integer_field_value_reaches_its_field_rule (test_candidate_loading.IntegerDigitLimitTests.test_long_integer_field_value_reaches_its_field_rule) (limit=4300) ... ERROR
+  test_long_integer_field_value_reaches_its_field_rule (test_candidate_loading.IntegerDigitLimitTests.test_long_integer_field_value_reaches_its_field_rule) (limit=640) ... ERROR
+test_long_integers_keep_their_exact_value_at_any_depth (test_candidate_loading.IntegerDigitLimitTests.test_long_integers_keep_their_exact_value_at_any_depth) ... 
+  test_long_integers_keep_their_exact_value_at_any_depth (test_candidate_loading.IntegerDigitLimitTests.test_long_integers_keep_their_exact_value_at_any_depth) (limit=4300, digits=10000) ... ERROR
+  test_long_integers_keep_their_exact_value_at_any_depth (test_candidate_loading.IntegerDigitLimitTests.test_long_integers_keep_their_exact_value_at_any_depth) (limit=4300, digits=100001) ... ERROR
+  test_long_integers_keep_their_exact_value_at_any_depth (test_candidate_loading.IntegerDigitLimitTests.test_long_integers_keep_their_exact_value_at_any_depth) (limit=640, digits=641) ... ERROR
+  test_long_integers_keep_their_exact_value_at_any_depth (test_candidate_loading.IntegerDigitLimitTests.test_long_integers_keep_their_exact_value_at_any_depth) (limit=640, digits=1281) ... ERROR
+  test_long_integers_keep_their_exact_value_at_any_depth (test_candidate_loading.IntegerDigitLimitTests.test_long_integers_keep_their_exact_value_at_any_depth) (limit=640, digits=1280) ... ERROR
+  test_long_integers_keep_their_exact_value_at_any_depth (test_candidate_loading.IntegerDigitLimitTests.test_long_integers_keep_their_exact_value_at_any_depth) (limit=640, digits=10000) ... ERROR
+  test_long_integers_keep_their_exact_value_at_any_depth (test_candidate_loading.IntegerDigitLimitTests.test_long_integers_keep_their_exact_value_at_any_depth) (limit=640, digits=100001) ... ERROR
+test_review_reproduction_is_a_rejected_row_under_every_limit (test_candidate_loading.IntegerDigitLimitTests.test_review_reproduction_is_a_rejected_row_under_every_limit) ... 
+  test_review_reproduction_is_a_rejected_row_under_every_limit (test_candidate_loading.IntegerDigitLimitTests.test_review_reproduction_is_a_rejected_row_under_every_limit) (limit=4300) ... ERROR
+  test_review_reproduction_is_a_rejected_row_under_every_limit (test_candidate_loading.IntegerDigitLimitTests.test_review_reproduction_is_a_rejected_row_under_every_limit) (limit=640) ... ERROR
+test_the_process_wide_setting_is_never_changed (test_candidate_loading.IntegerDigitLimitTests.test_the_process_wide_setting_is_never_changed) ... ERROR
+
+======================================================================
+ERROR: test_long_integer_field_value_reaches_its_field_rule (test_candidate_loading.IntegerDigitLimitTests.test_long_integer_field_value_reaches_its_field_rule) (limit=4300)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/out/r1/tests/test_candidate_loading.py", line 276, in test_long_integer_field_value_reaches_its_field_rule
+    rows = load_rows(data.encode(), format="json")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/api.py", line 20, in load_rows
+    return load(data, format)
+           ^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 35, in load
+    rows = _parse_json(text) if data_format == "json" else _parse_csv(text)
+           ^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 75, in _parse_json
+    raise WorkbenchError(INVALID_DOCUMENT)
+assess_workbench.errors.WorkbenchError: INVALID_DOCUMENT
+
+======================================================================
+ERROR: test_long_integer_field_value_reaches_its_field_rule (test_candidate_loading.IntegerDigitLimitTests.test_long_integer_field_value_reaches_its_field_rule) (limit=640)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/out/r1/tests/test_candidate_loading.py", line 276, in test_long_integer_field_value_reaches_its_field_rule
+    rows = load_rows(data.encode(), format="json")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/api.py", line 20, in load_rows
+    return load(data, format)
+           ^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 35, in load
+    rows = _parse_json(text) if data_format == "json" else _parse_csv(text)
+           ^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 75, in _parse_json
+    raise WorkbenchError(INVALID_DOCUMENT)
+assess_workbench.errors.WorkbenchError: INVALID_DOCUMENT
+
+======================================================================
+ERROR: test_long_integers_keep_their_exact_value_at_any_depth (test_candidate_loading.IntegerDigitLimitTests.test_long_integers_keep_their_exact_value_at_any_depth) (limit=4300, digits=10000)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/out/r1/tests/test_candidate_loading.py", line 267, in test_long_integers_keep_their_exact_value_at_any_depth
+    rows = load_rows(data, format="json")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/api.py", line 20, in load_rows
+    return load(data, format)
+           ^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 35, in load
+    rows = _parse_json(text) if data_format == "json" else _parse_csv(text)
+           ^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 75, in _parse_json
+    raise WorkbenchError(INVALID_DOCUMENT)
+assess_workbench.errors.WorkbenchError: INVALID_DOCUMENT
+
+======================================================================
+ERROR: test_long_integers_keep_their_exact_value_at_any_depth (test_candidate_loading.IntegerDigitLimitTests.test_long_integers_keep_their_exact_value_at_any_depth) (limit=4300, digits=100001)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/out/r1/tests/test_candidate_loading.py", line 267, in test_long_integers_keep_their_exact_value_at_any_depth
+    rows = load_rows(data, format="json")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/api.py", line 20, in load_rows
+    return load(data, format)
+           ^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 35, in load
+    rows = _parse_json(text) if data_format == "json" else _parse_csv(text)
+           ^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 75, in _parse_json
+    raise WorkbenchError(INVALID_DOCUMENT)
+assess_workbench.errors.WorkbenchError: INVALID_DOCUMENT
+
+======================================================================
+ERROR: test_long_integers_keep_their_exact_value_at_any_depth (test_candidate_loading.IntegerDigitLimitTests.test_long_integers_keep_their_exact_value_at_any_depth) (limit=640, digits=641)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/out/r1/tests/test_candidate_loading.py", line 267, in test_long_integers_keep_their_exact_value_at_any_depth
+    rows = load_rows(data, format="json")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/api.py", line 20, in load_rows
+    return load(data, format)
+           ^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 35, in load
+    rows = _parse_json(text) if data_format == "json" else _parse_csv(text)
+           ^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 75, in _parse_json
+    raise WorkbenchError(INVALID_DOCUMENT)
+assess_workbench.errors.WorkbenchError: INVALID_DOCUMENT
+
+======================================================================
+ERROR: test_long_integers_keep_their_exact_value_at_any_depth (test_candidate_loading.IntegerDigitLimitTests.test_long_integers_keep_their_exact_value_at_any_depth) (limit=640, digits=1281)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/out/r1/tests/test_candidate_loading.py", line 267, in test_long_integers_keep_their_exact_value_at_any_depth
+    rows = load_rows(data, format="json")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/api.py", line 20, in load_rows
+    return load(data, format)
+           ^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 35, in load
+    rows = _parse_json(text) if data_format == "json" else _parse_csv(text)
+           ^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 75, in _parse_json
+    raise WorkbenchError(INVALID_DOCUMENT)
+assess_workbench.errors.WorkbenchError: INVALID_DOCUMENT
+
+======================================================================
+ERROR: test_long_integers_keep_their_exact_value_at_any_depth (test_candidate_loading.IntegerDigitLimitTests.test_long_integers_keep_their_exact_value_at_any_depth) (limit=640, digits=1280)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/out/r1/tests/test_candidate_loading.py", line 267, in test_long_integers_keep_their_exact_value_at_any_depth
+    rows = load_rows(data, format="json")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/api.py", line 20, in load_rows
+    return load(data, format)
+           ^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 35, in load
+    rows = _parse_json(text) if data_format == "json" else _parse_csv(text)
+           ^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 75, in _parse_json
+    raise WorkbenchError(INVALID_DOCUMENT)
+assess_workbench.errors.WorkbenchError: INVALID_DOCUMENT
+
+======================================================================
+ERROR: test_long_integers_keep_their_exact_value_at_any_depth (test_candidate_loading.IntegerDigitLimitTests.test_long_integers_keep_their_exact_value_at_any_depth) (limit=640, digits=10000)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/out/r1/tests/test_candidate_loading.py", line 267, in test_long_integers_keep_their_exact_value_at_any_depth
+    rows = load_rows(data, format="json")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/api.py", line 20, in load_rows
+    return load(data, format)
+           ^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 35, in load
+    rows = _parse_json(text) if data_format == "json" else _parse_csv(text)
+           ^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 75, in _parse_json
+    raise WorkbenchError(INVALID_DOCUMENT)
+assess_workbench.errors.WorkbenchError: INVALID_DOCUMENT
+
+======================================================================
+ERROR: test_long_integers_keep_their_exact_value_at_any_depth (test_candidate_loading.IntegerDigitLimitTests.test_long_integers_keep_their_exact_value_at_any_depth) (limit=640, digits=100001)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/out/r1/tests/test_candidate_loading.py", line 267, in test_long_integers_keep_their_exact_value_at_any_depth
+    rows = load_rows(data, format="json")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/api.py", line 20, in load_rows
+    return load(data, format)
+           ^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 35, in load
+    rows = _parse_json(text) if data_format == "json" else _parse_csv(text)
+           ^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 75, in _parse_json
+    raise WorkbenchError(INVALID_DOCUMENT)
+assess_workbench.errors.WorkbenchError: INVALID_DOCUMENT
+
+======================================================================
+ERROR: test_review_reproduction_is_a_rejected_row_under_every_limit (test_candidate_loading.IntegerDigitLimitTests.test_review_reproduction_is_a_rejected_row_under_every_limit) (limit=4300)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/out/r1/tests/test_candidate_loading.py", line 247, in test_review_reproduction_is_a_rejected_row_under_every_limit
+    rows = load_rows(data, format="json")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/api.py", line 20, in load_rows
+    return load(data, format)
+           ^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 35, in load
+    rows = _parse_json(text) if data_format == "json" else _parse_csv(text)
+           ^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 75, in _parse_json
+    raise WorkbenchError(INVALID_DOCUMENT)
+assess_workbench.errors.WorkbenchError: INVALID_DOCUMENT
+
+======================================================================
+ERROR: test_review_reproduction_is_a_rejected_row_under_every_limit (test_candidate_loading.IntegerDigitLimitTests.test_review_reproduction_is_a_rejected_row_under_every_limit) (limit=640)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/out/r1/tests/test_candidate_loading.py", line 247, in test_review_reproduction_is_a_rejected_row_under_every_limit
+    rows = load_rows(data, format="json")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/api.py", line 20, in load_rows
+    return load(data, format)
+           ^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 35, in load
+    rows = _parse_json(text) if data_format == "json" else _parse_csv(text)
+           ^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 75, in _parse_json
+    raise WorkbenchError(INVALID_DOCUMENT)
+assess_workbench.errors.WorkbenchError: INVALID_DOCUMENT
+
+======================================================================
+ERROR: test_the_process_wide_setting_is_never_changed (test_candidate_loading.IntegerDigitLimitTests.test_the_process_wide_setting_is_never_changed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/out/r1/tests/test_candidate_loading.py", line 284, in test_the_process_wide_setting_is_never_changed
+    rows = load_rows(b"[" + b"9" * 4301 + b"]", format="json")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/api.py", line 20, in load_rows
+    return load(data, format)
+           ^^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 35, in load
+    rows = _parse_json(text) if data_format == "json" else _parse_csv(text)
+           ^^^^^^^^^^^^^^^^^
+  File "/work/out/r1/assess_workbench/loading.py", line 75, in _parse_json
+    raise WorkbenchError(INVALID_DOCUMENT)
+assess_workbench.errors.WorkbenchError: INVALID_DOCUMENT
+
+======================================================================
+FAIL: test_directory_replaced_after_it_was_opened_is_not_reported_as_created (test_candidate_cli.DirectorySwapTests.test_directory_replaced_after_it_was_opened_is_not_reported_as_created)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/out/r1/tests/test_candidate_cli.py", line 358, in test_directory_replaced_after_it_was_opened_is_not_reported_as_created
+    self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
+AssertionError: Tuples differ: (0, 'REPORT_CREATED\n', '') != (2, '', 'ERROR IO_ERROR\n')
+
+First differing element 0:
+0
+2
+
+- (0, 'REPORT_CREATED\n', '')
++ (2, '', 'ERROR IO_ERROR\n')
+
+======================================================================
+FAIL: test_populated_directory_swapped_in_after_mkdir_receives_nothing (test_candidate_cli.DirectorySwapTests.test_populated_directory_swapped_in_after_mkdir_receives_nothing)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/out/r1/tests/test_candidate_cli.py", line 328, in test_populated_directory_swapped_in_after_mkdir_receives_nothing
+    self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
+AssertionError: Tuples differ: (0, 'REPORT_CREATED\n', '') != (2, '', 'ERROR IO_ERROR\n')
+
+First differing element 0:
+0
+2
+
+- (0, 'REPORT_CREATED\n', '')
++ (2, '', 'ERROR IO_ERROR\n')
+
+======================================================================
+FAIL: test_symlink_swapped_in_after_mkdir_is_not_followed (test_candidate_cli.DirectorySwapTests.test_symlink_swapped_in_after_mkdir_is_not_followed) (suffix='/')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/out/r1/tests/test_candidate_cli.py", line 317, in test_symlink_swapped_in_after_mkdir_is_not_followed
+    self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
+AssertionError: Tuples differ: (0, 'REPORT_CREATED\n', '') != (2, '', 'ERROR IO_ERROR\n')
+
+First differing element 0:
+0
+2
+
+- (0, 'REPORT_CREATED\n', '')
++ (2, '', 'ERROR IO_ERROR\n')
+
+======================================================================
+FAIL: test_symlink_swapped_in_after_mkdir_is_not_followed (test_candidate_cli.DirectorySwapTests.test_symlink_swapped_in_after_mkdir_is_not_followed) (suffix='//')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/out/r1/tests/test_candidate_cli.py", line 317, in test_symlink_swapped_in_after_mkdir_is_not_followed
+    self.assertEqual(result, (2, "", "ERROR IO_ERROR\n"))
+AssertionError: Tuples differ: (0, 'REPORT_CREATED\n', '') != (2, '', 'ERROR IO_ERROR\n')
+
+First differing element 0:
+0
+2
+
+- (0, 'REPORT_CREATED\n', '')
++ (2, '', 'ERROR IO_ERROR\n')
+
+======================================================================
+FAIL: test_interpreter_settings_and_locale_do_not_change_the_result (test_candidate_environment.EnvironmentTests.test_interpreter_settings_and_locale_do_not_change_the_result)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/out/r1/tests/test_candidate_environment.py", line 69, in test_interpreter_settings_and_locale_do_not_change_the_result
+    self.assertEqual((result.returncode, result.stdout, result.stderr), (0, "REPORT_CREATED\n", ""), name)
+AssertionError: Tuples differ: (2, '', 'ERROR INVALID_DOCUMENT\n') != (0, 'REPORT_CREATED\n', '')
+
+First differing element 0:
+2
+0
+
+- (2, '', 'ERROR INVALID_DOCUMENT\n')
++ (0, 'REPORT_CREATED\n', '') : defaults
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.437s
+
+FAILED (failures=5, errors=12)
